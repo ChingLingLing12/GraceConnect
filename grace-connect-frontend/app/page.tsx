@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { Button, Card, CardBody, Typography, Accordion, AccordionHeader, AccordionBody } from "@material-tailwind/react";
 import { useState, useEffect } from 'react';
 
 export default function Home() {
@@ -59,7 +58,14 @@ export default function Home() {
   }
 
   return (
-    
+    <div className="min-h-screen bg-gray-100 p-8">
+      <h3 className="mb-6 text-center text-gray-800 font-semibold">
+        Grace Connect Check-In System
+      </h3>
+      <h3 className="mb-8 text-center text-gray-600">
+        {currentDateTime.dateString} | {currentDateTime.timeString}
+      </h3>
+    </div>
   )
 }
 
