@@ -55,6 +55,8 @@ export default function Home() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [youths, setYouths] = useState(sampleYouth);
+  const [filterMode, setFilterMode] = useState<"default" | "signedIn" | "signedOut">("default");
+
 
    const items = [
     "Next.js",
@@ -101,11 +103,22 @@ const handleSignIn = (youth: Youth) => {
     );
   };
 
-  const filteredYouths = youths.filter((youth) =>
-    `${youth.firstName} ${youth.lastName}`
+  const filteredYouths = youths.filter((youth) => {
+  // Search filter
+    const matchesSearch = `${youth.firstName} ${youth.lastName}`
       .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+      .includes(searchTerm.toLowerCase());
+
+    // 3-part switch filter
+    const matchesSwitch =
+      filterMode === "default"
+        ? true
+        : filterMode === "signedIn"
+        ? youth.signedIn
+        : !youth.signedIn; // signedOut
+
+    return matchesSearch && matchesSwitch;
+});
 
   return (
      <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
@@ -122,7 +135,24 @@ const handleSignIn = (youth: Youth) => {
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className="mb-4"
+        isClearable
+        onClear={() => setSearchTerm("")}
       />
+
+      {/* 3-part filter switch */}
+      <div className="flex border border-gray-300 rounded overflow-hidden mb-4">
+        {["default", "signedIn", "signedOut"].map(mode => (
+          <button
+            key={mode}
+            className={`flex-1 py-2 text-center font-medium
+              ${filterMode === mode ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"}
+              hover:bg-blue-500 hover:text-white transition-colors`}
+            onClick={() => setFilterMode(mode as "default" | "signedIn" | "signedOut")}
+          >
+            {mode === "default" ? "All" : mode === "signedIn" ? "Sign Out Mode" : "Sign In Mode"}
+          </button>
+        ))}
+      </div>
 
        <div className="space-y-4">
         {filteredYouths.map((youth) => (
