@@ -1,13 +1,53 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect } from 'react';
+import { Input } from "@heroui/react";
+import { Youth } from "./components/YouthCard";
+import YouthCard from "./components/YouthCard";
+
+const sampleYouth: Youth[] = [
+  {
+    firstName: "Alice",
+    lastName: "Smith",
+    signedIn: false,
+    lastSignedIn: "2025-10-26T08:00:00",
+    lastSignedOut: "2025-10-26T12:00:00",
+  },
+  {
+    firstName: "Bob",
+    lastName: "Johnson",
+    signedIn: true,
+    lastSignedIn: "2025-10-26T13:00:00",
+    lastSignedOut: "2025-10-26T09:00:00",
+  },
+  {
+    firstName: "Charlie",
+    lastName: "Lee",
+    signedIn: false,
+    lastSignedIn: "2025-10-26T07:00:00",
+    lastSignedOut: "2025-10-26T14:00:00",
+  },
+];
+
 
 export default function Home() {
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [youths, setYouths] = useState(sampleYouth);
+
+   const items = [
+    "Next.js",
+    "Tailwind CSS",
+    "TypeScript",
+    "React",
+    "Vercel",
+    "Node.js",
+    "Express",
+    "MongoDB",
+  ];
+
   // State for current date and time to avoid hydration mismatch
   const [currentDateTime, setCurrentDateTime] = useState({ dateString: '', timeString: '' });
-  const [openAccordions, setOpenAccordions] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -20,52 +60,62 @@ export default function Home() {
     updateDateTime();
   }, []);
 
-  const handleAccordionOpen = (familyIndex: number) => {
-    setOpenAccordions(prev => ({
-      ...prev,
-      [familyIndex]: !prev[familyIndex]
-    }));
+const handleSignIn = (youth: Youth) => {
+    setYouths((prev) =>
+      prev.map((y) =>
+        y === youth
+          ? { ...y, signedIn: true, lastSignedIn: new Date().toISOString() }
+          : y
+      )
+    );
   };
 
-  // Sample family data with proper state management
-  const parents1 = {"firstName":"John","lastName":"Doe", "email":"john.doe@example.com", "phone":"(08) 9310 9488", };
-  const children1 = [
-    {"firstname": "Demetrius", "lastname": "Johnson", "family" : parents1, "signedIn": false},
-    {"firstname": "Joe", "lastname": "Johnson", "family" : parents1, "signedIn": false}
-  ];
-  const parents2 = {"firstName":"Jane","lastName":"Chan", "email":"jane.doe@example.com", "phone":"(08) 9310 9488", };
-  const children2 = [{"firstname": "Diana", "lastname": "Johnson", "family" : parents2, "signedIn": false}];
-  const parents3 = {"firstName":"Jim","lastName":"Beam", "email":"jim.beam@example.com", "phone":"(08) 9310 9488", };
-  const children3 = [{"firstname": "Jack", "lastname": "Daniels", "family" : parents3, "signedIn": false}];
-  const parents4 = {"firstName":"Johnny","lastName":"Walker", "email":"johnny.walker@example.com", "phone":"(08) 9310 9488", };
-  const children4 = [{"firstname": "James", "lastname": "Bond", "family" : parents4, "signedIn": false}];
+  const handleSignOut = (youth: Youth) => {
+    setYouths((prev) =>
+      prev.map((y) =>
+        y === youth
+          ? { ...y, signedIn: false, lastSignedOut: new Date().toISOString() }
+          : y
+      )
+    );
+  };
 
-  const [families, setFamilies] = useState([children1, children2, children3, children4]);
-
-  const handleSignInOut = (targetChild: any, familyIndex: number, childIndex: number) => {
-    setFamilies(prevFamilies => {
-      const newFamilies = [...prevFamilies];
-      const newFamily = [...newFamilies[familyIndex]];
-      newFamily[childIndex] = {
-        ...newFamily[childIndex],
-        signedIn: !newFamily[childIndex].signedIn
-      };
-      newFamilies[familyIndex] = newFamily;
-      
-      console.log(`${newFamily[childIndex].signedIn ? 'Signing in' : 'Signing out'} ${newFamily[childIndex].firstname} ${newFamily[childIndex].lastname} at ${new Date().toLocaleTimeString()}`);
-      return newFamilies;
-    });
-  }
+  const filteredYouths = youths.filter((youth) =>
+    `${youth.firstName} ${youth.lastName}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h3 className="mb-6 text-center text-gray-800 font-semibold">
+     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
+    <div className="w-full max-w-md">
+      <h3 className="text-2xl font-semibold mb-6 text-center">
         Grace Connect Check-In System
       </h3>
       <h3 className="mb-8 text-center text-gray-600">
         {currentDateTime.dateString} | {currentDateTime.timeString}
       </h3>
+     {/* Search Bar */}
+      <Input
+        placeholder="Search youth..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="mb-4"
+      />
+
+       <div className="space-y-4">
+        {filteredYouths.map((youth) => (
+          <YouthCard
+            key={`${youth.firstName}-${youth.lastName}`}
+            youth={youth}
+            onSignIn={handleSignIn}
+            onSignOut={handleSignOut}
+          />
+        ))}
+      </div>
     </div>
+    </main>
+  
   )
 }
 
