@@ -140,7 +140,7 @@ const handleSignIn = (youth: Youth) => {
       />
 
       {/* 3-part filter switch */}
-      <div className="flex border border-gray-300 rounded overflow-hidden mb-4">
+      <div className="flex border border-gray-900 rounded overflow-hidden mb-4">
         {["default", "signedIn", "signedOut"].map(mode => (
           <button
             key={mode}
