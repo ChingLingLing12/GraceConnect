@@ -7,6 +7,7 @@ export interface Youth {
   firstName: string;
   lastName: string;
   signedIn: boolean;
+  cell?: string;
   lastSignedIn?: string;
   lastSignedOut?: string;
   family?: string;
