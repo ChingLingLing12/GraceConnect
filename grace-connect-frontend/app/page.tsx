@@ -27,6 +27,27 @@ const sampleYouth: Youth[] = [
     lastSignedIn: "2025-10-26T07:00:00",
     lastSignedOut: "2025-10-26T14:00:00",
   },
+   {
+    firstName: "Joseph",
+    lastName: "Smith",
+    signedIn: false,
+    lastSignedIn: "2025-10-26T08:00:00",
+    lastSignedOut: "2025-10-26T12:00:00",
+  },
+  {
+    firstName: "Jess",
+    lastName: "Johnson",
+    signedIn: true,
+    lastSignedIn: "2025-10-26T13:00:00",
+    lastSignedOut: "2025-10-26T09:00:00",
+  },
+  {
+    firstName: "Catherine",
+    lastName: "Lee",
+    signedIn: false,
+    lastSignedIn: "2025-10-26T07:00:00",
+    lastSignedOut: "2025-10-26T14:00:00",
+  },
 ];
 
 

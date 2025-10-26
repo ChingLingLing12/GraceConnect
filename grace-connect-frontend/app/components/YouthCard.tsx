@@ -1,6 +1,7 @@
 // components/YouthCard.tsx
 import { Card, CardBody, Button } from "@heroui/react"
 import React from "react";
+import { format } from "date-fns";
 
 export interface Youth {
   firstName: string;
@@ -29,9 +30,11 @@ const YouthCard: React.FC<YouthCardProps> = ({ youth, onSignIn, onSignOut }) => 
       <CardBody className="flex justify-between items-center">
         <div>
           <p className="font-semibold">{youth.firstName} {youth.lastName}</p>
-          <p className="text-gray-400 text-sm">
-            Last activity: {new Date(latestTime).toISOString()}
-          </p>
+          {youth.signedIn ? (
+            <p className="text-green-400 text-sm">Last Signed In: {format(new Date(latestTime), "EEE dd/MM HH:mm")}</p>
+          ) : (
+            <p className="text-red-400 text-sm">Last Signed Out: {format(new Date(latestTime), "EEE dd/MM HH:mm")}</p>
+          )}
         </div>
         {youth.signedIn ? (
           <Button color="danger" onClick={() => onSignOut(youth)}>
