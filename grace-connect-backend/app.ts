@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import logController from "./controllers/logController";
+import childController from "./controllers/childController";
+import houseHoldController from "./controllers/houseHoldController";
 import 'dotenv/config';
 
 const express = require('express');
@@ -16,8 +18,15 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/graceconnec
 });
 
 // Routes
-app.get ('/api/logs', logController.getLogs);
-app.post('/api/logs', logController.createLog);
+app.get ('/api/log', logController.getLogs);
+app.post('/api/log', logController.createLog);
+
+app.get('/api/youth', childController.getChildren);
+app.post('/api/youth', childController.createChild);
+
+app.get('/api/household', houseHoldController.getHouseHolds);
+app.post('/api/household', houseHoldController.createHouseHold);
+
 
 app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);

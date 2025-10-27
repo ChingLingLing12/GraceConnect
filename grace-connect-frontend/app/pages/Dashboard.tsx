@@ -6,7 +6,7 @@ import { Youth } from "../components/YouthCard";
 import YouthCard from "../components/YouthCard";
 
 export enum Cell {
-  Year12="Year 12",
+  Year12="Year 12 Cell",
   Year89="Year 8/9 Cell",
   Year1011="Year 10/11 Cell",
   Year7="Year 7 Cell",
