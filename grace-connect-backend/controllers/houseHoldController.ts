@@ -7,7 +7,21 @@ export const houseHoldController = {
     createHouseHold: async (req: any, res: any) => {
         try {
             const houseHold = new HouseHold(req.body);
+            console.log('Creating Household with data:', req.body);
+            const houseHoldList = await HouseHold.findOne({ guardianFirstName: req.body.guardianFirstName, guardianLastName: req.body.guardianLastName, email: req.body.email, phone: req.body.phone });
+
+            if (houseHoldList) {
+                console.log('Household already exists:', houseHoldList._id);
+                if(houseHoldList.children.includes(...req.body.children)){
+                    return res.status(400).json({ error: 'Children already exist in the household' });
+                }
+                req.body.children = [...new Set([...houseHoldList.children, ...req.body.children])];
+                await HouseHold.findByIdAndUpdate(houseHoldList._id, req.body);
+                return res.status(500).json({ error: 'Household already exists, updated' });
+            }
+
             await houseHold.save();
+            console.log('Current Households in DB:', houseHoldList);
             res.status(201).json(houseHold);
         } catch (error) {
             console.error('Error creating household:', error);

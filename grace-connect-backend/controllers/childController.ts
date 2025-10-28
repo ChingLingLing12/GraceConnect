@@ -23,7 +23,7 @@ export const childController = {
         }
     },
 
-    getChildren: async (req: any, res: any) => {
+    getChildren: async (req: any, res: any) => {        // Retrieve all children
         try {
             const children = await Child.find();
             res.status(200).json({ success: true, children });
@@ -37,6 +37,14 @@ export const childController = {
         try {
             const { id } = req.params;
             const updates = req.body;
+            
+            if (updates.records) {
+                const selectedChild = await Child.findById(id);
+                if (selectedChild) {
+                    updates.records = [...(selectedChild.records || []), ...(Array.isArray(updates.records) ? updates.records : [updates.records])];
+                }
+            }
+            
             const updatedChild = await Child.findByIdAndUpdate(id, updates, { new: true });
             if (!updatedChild) {
                 return res.status(404).json({ success: false, error: 'Child not found' });
