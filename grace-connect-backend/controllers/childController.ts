@@ -31,6 +31,21 @@ export const childController = {
             console.error("Error retrieving children:", error);
             res.status(500).json({ success: false, error: 'Failed to retrieve children' });
         }
+    },
+
+    editChild: async (req: any, res: any) => {
+        try {
+            const { id } = req.params;
+            const updates = req.body;
+            const updatedChild = await Child.findByIdAndUpdate(id, updates, { new: true });
+            if (!updatedChild) {
+                return res.status(404).json({ success: false, error: 'Child not found' });
+            }
+            res.status(200).json({ success: true, child: updatedChild });
+        } catch (error) {
+            console.error("Error updating child:", error);
+            res.status(500).json({ success: false, error: 'Failed to update child' });
+        }
     }
 }
 export default childController

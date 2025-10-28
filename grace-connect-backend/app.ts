@@ -23,10 +23,11 @@ app.post('/api/log', logController.createLog);
 
 app.get('/api/youth', childController.getChildren);
 app.post('/api/youth', childController.createChild);
+app.put('/api/youth/:id', childController.editChild);
 
 app.get('/api/household', houseHoldController.getHouseHolds);
 app.post('/api/household', houseHoldController.createHouseHold);
-
+app.put('/api/household/:id', houseHoldController.editHouseHold);
 
 app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);
