@@ -8,7 +8,16 @@ const childSchema = new mongoose.Schema({
     age: Number,
     cell: { type: String, enum: cellValues },
     records: [ {type: mongoose.Schema.Types.ObjectId, ref: 'Log'} ],
-    isSignedin: { type: Boolean, default: false },
+    signedIn: { type: Boolean, default: false },
+    lastSignedIn: { type: String},
+    lastSignedOut: { type: String},
 });
+
+    // firstName: "Catherine",
+    // lastName: "Lee",
+    // signedIn: false,
+    // lastSignedIn: "2025-10-26T07:00:00",
+    // lastSignedOut: "2025-10-26T14:00:00",
+    // cell: Cell.Year1011
 
 export default childSchema;

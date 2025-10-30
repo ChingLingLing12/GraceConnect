@@ -3,10 +3,18 @@ import logController from "./controllers/logController";
 import childController from "./controllers/childController";
 import houseHoldController from "./controllers/houseHoldController";
 import 'dotenv/config';
+import cors from 'cors';
 
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
+
+// CORS configuration
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    credentials: true,
+    optionsSuccessStatus: 200
+}));
 
 app.use(express.json());
 

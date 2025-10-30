@@ -71,6 +71,50 @@ export default function Dashboard() {
   const [filterMode, setFilterMode] = useState<"default" | "signedIn" | "signedOut">("default");
   const [viewMode, setViewMode] = useState<"default" | "cell">("default");
 
+  const API_URL = 'http://127.0.0.1:4000';
+  const YOUTH_URL = `${API_URL}/api/youth`;
+
+    //fetch youths from backend functions
+  const fetchYouths = async () => {
+    try{
+      const res = await fetch(`${YOUTH_URL}`);
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      console.log('Fetched youths:', data);
+      
+      // Check if the response has the expected structure
+      if (data.success && Array.isArray(data.children)) {
+        setYouths(data.children);
+      } else {
+        console.warn('Unexpected API response format:', data);
+        // Keep the sample data if API response is not in expected format
+      }
+    } catch (error) {
+      console.error('Error fetching youths:', error);
+      // Keep the sample data on error - no need to call setYouths since it's already initialized
+    }
+  }
+
+  const editYouth = async (id: string, updates: Partial<Youth>) => {
+    try {
+      const res = await fetch(`${YOUTH_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      console.log('Updated youth:', data);
+    } catch (error) {
+      console.error('Error updating youth:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchYouths();
+  }, []);
 
   // State for current date and time to avoid hydration mismatch
   const [currentDateTime, setCurrentDateTime] = useState({ dateString: '', timeString: '' });
@@ -87,23 +131,26 @@ export default function Dashboard() {
   }, []);
 
 const handleSignIn = (youth: Youth) => {
-    setYouths((prev) =>
+    setYouths((prev: Youth[]) =>
       prev.map((y) =>
         y === youth
           ? { ...y, signedIn: true, lastSignedIn: new Date().toISOString() }
           : y
-      )
+      ) 
     );
+    editYouth(youth._id!, { signedIn: true, lastSignedIn: new Date().toISOString() });
+    console.log("@@@", youth.lastSignedIn);
   };
 
   const handleSignOut = (youth: Youth) => {
-    setYouths((prev) =>
+    setYouths((prev: Youth[]) =>
       prev.map((y) =>
         y === youth
           ? { ...y, signedIn: false, lastSignedOut: new Date().toISOString() }
           : y
       )
     );
+    editYouth(youth._id!, { signedIn: false, lastSignedOut: new Date().toISOString() });
   };
 
   const filteredYouths = youths.filter((youth) => {

@@ -4,13 +4,14 @@ import childSchema from "../models/childModel";
 const Child = mongoose.models.Child || mongoose.model("Child", childSchema);
 
 export const childController = {
+    
     createChild: async (req: any, res: any) => {
         try {
-            const { firstName, lastName, age, cell, isSignedin } = req.body;
+            const { firstName, lastName, age, cell, signedIn, lastSignedIn, lastSignedOut } = req.body;
             if (!firstName || !lastName || !cell) {
                 return res.status(400).json({ success: false, error: 'Missing required fields' });
             }
-            const newChild = new Child({ firstName, lastName, age, cell, isSignedin });
+            const newChild = new Child({ firstName, lastName, age, cell, signedIn: signedIn, lastSignedIn: lastSignedIn, lastSignedOut: lastSignedOut });
             await newChild.save();
 
             const responseChild = {

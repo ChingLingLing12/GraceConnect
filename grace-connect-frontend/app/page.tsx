@@ -92,6 +92,7 @@ export default function Home() {
     }
   };
 
+
   return (
     <div>
         <Navbar onMenuOpenChange={setIsMenuOpen} isMenuOpen={isMenuOpen} className="bg-gray-800 text-white">
@@ -107,7 +108,7 @@ export default function Home() {
                   }`}
                 >
                   Dashboard
-            </button>
+              </button>
             </NavbarItem>
             <NavbarItem isActive>
                <button
