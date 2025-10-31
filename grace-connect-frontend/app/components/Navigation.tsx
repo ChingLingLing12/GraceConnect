@@ -10,7 +10,7 @@ export default function Navigation() {
   return (
     <Navbar onMenuOpenChange={setIsMenuOpen} className="bg-gray-800 text-white">
       <NavbarBrand>
-        <Image src="/grace-connect-logo-test.png" alt="App Logo" width="160" height="120"/>
+        <Image src="/GMC logo3.jpeg" alt="App Logo" width="55" height="55" style={{ borderRadius: "16px" }}/>
       </NavbarBrand>
       <NavbarContent className="hidden sm:flex gap-4" justify="center">
         <NavbarItem>

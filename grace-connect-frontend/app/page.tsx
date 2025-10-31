@@ -10,7 +10,7 @@ import Statistics from "./pages/Statistics";
 import Register from "./pages/Register";
 
 export enum Cell {
-  Year12="Year 12",
+  Year12="Year 12 Cell",
   Year89="Year 8/9 Cell",
   Year1011="Year 10/11 Cell",
   Year7="Year 7 Cell",
@@ -97,7 +97,7 @@ export default function Home() {
     <div>
         <Navbar onMenuOpenChange={setIsMenuOpen} isMenuOpen={isMenuOpen} className="bg-gray-800 text-white">
           <NavbarBrand>
-            <Image onClick={() => handleSelect("dashboard")} src="/grace-connect-logo-test.png" alt="App Logo" width="160" height="120"/>
+            <Image onClick={() => handleSelect("dashboard")} src="/GMC logo3.jpeg" alt="App Logo" width="55" height="55" style={{ borderRadius: "15px" }}/>
           </NavbarBrand>
           <NavbarContent className="hidden sm:flex gap-6" justify="center">
             <NavbarItem>

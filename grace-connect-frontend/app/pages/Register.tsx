@@ -4,7 +4,7 @@ import { Input, Button, Select, SelectItem, Switch } from "@heroui/react";
 import { create } from "domain";
 
 export enum Cell {
-  Year12 = "Year 12",
+  Year12 = "Year 12 Cell",
   Year89 = "Year 8/9 Cell",
   Year1011 = "Year 10/11 Cell",
   Year7 = "Year 7 Cell",

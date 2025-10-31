@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const cellValues = ['Year 12', 'Year 8/9 Cell', 'Year 10/11 Cell', 'Year 7 Cell'];
+const cellValues = ['Year 12 Cell', 'Year 8/9 Cell', 'Year 10/11 Cell', 'Year 7 Cell'];
 
 const childSchema = new mongoose.Schema({
     firstName: String,
@@ -13,11 +13,5 @@ const childSchema = new mongoose.Schema({
     lastSignedOut: { type: String},
 });
 
-    // firstName: "Catherine",
-    // lastName: "Lee",
-    // signedIn: false,
-    // lastSignedIn: "2025-10-26T07:00:00",
-    // lastSignedOut: "2025-10-26T14:00:00",
-    // cell: Cell.Year1011
 
 export default childSchema;
