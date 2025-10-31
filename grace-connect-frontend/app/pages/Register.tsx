@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Input, Button, Select, SelectItem, Switch } from "@heroui/react";
+import { create } from "domain";
 
 export enum Cell {
   Year12 = "Year 12",
@@ -8,19 +9,37 @@ export enum Cell {
   Year1011 = "Year 10/11 Cell",
   Year7 = "Year 7 Cell",
 }
+export interface HouseHold {
+  id: string;
+  guardianFirstName: string;
+  guardianLastName: string;
+  email: string;
+  phone: string;
+  children?: Youth[];
+}
 
 export interface Youth {
   id: string;
   firstName: string;
   lastName: string;
+  age: number;
   signedIn: boolean;
   cell?: Cell;
 }
 
 export default function RegisterForm() {
+  const [houseHold, setHouseHold] = useState<HouseHold>(
+    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] } 
+  );
   const [youths, setYouths] = useState<Youth[]>([
-    { id: String(Date.now()), firstName: "", lastName: "", signedIn: false },
+    { id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false },
   ]);
+
+  const updateHouseHold = <K extends keyof HouseHold>(field: K, value: HouseHold[K]) => {
+    setHouseHold(prev => ({ ...prev, [field]: value }));
+  };
+
+
 
   const updateYouth = <K extends keyof Youth>(index: number, field: K, value: Youth[K]) => {
     setYouths(prev => {
@@ -33,7 +52,7 @@ export default function RegisterForm() {
   const addYouth = () => {
     setYouths(prev => [
       ...prev,
-      { id: String(Date.now()) + Math.random(), firstName: "", lastName: "", signedIn: false },
+      { id: String(Date.now()) + Math.random(), firstName: "", lastName: "", age: 0, signedIn: false },
     ]);
   };
 
@@ -41,10 +60,66 @@ export default function RegisterForm() {
     setYouths(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  //API calls to backend
+  const API_URL = 'http://127.0.0.1:4000';
+  const YOUTH_URL = `${API_URL}/api/youth`;
+  const HOUSEHOLD_URL = `${API_URL}/api/household`;
+
+  const createHouseHold = async (houseHold: HouseHold, childIDs: string[]) => {
+    try {
+      console.log("Creating household with children IDs:", childIDs);
+      const response = await fetch(HOUSEHOLD_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...houseHold, children: childIDs }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to create household");
+      }
+    } catch (error) {
+      console.error("Error creating household:", error);
+    }
+  };
+
+  const createYouth = async (youth: Youth): Promise<string> => {
+    try {
+      const response = await fetch(YOUTH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(youth),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to create youth");
+      }
+      const data = await response.json();
+      console.log("Youth created:", data);
+      // Return the MongoDB _id from the created youth
+      return data.child._id;
+    } catch (error) {
+      console.error("Error creating youth:", error);
+      throw error;
+    }
+  };
+  
+
+  const handleSubmit = async (e: React.FormEvent) => {    
     e.preventDefault();
-    console.log("Submitted:", youths);
-    alert(JSON.stringify(youths, null, 2));
+    try {
+      const childIDs: string[] = [];
+      for (const youth of youths) {
+        const childId = await createYouth(youth);
+        childIDs.push(childId);
+      }
+      await createHouseHold(houseHold, childIDs);
+      alert("Registration completed successfully!");
+    } catch (error) {
+      console.error("Error during registration:", error);
+      alert("Registration failed. Please try again.");
+    }
   };
 
   return (
@@ -58,6 +133,8 @@ export default function RegisterForm() {
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your first name"
+            value={houseHold.guardianFirstName}
+            onChange={e => updateHouseHold("guardianFirstName", e.target.value)}
           />
           <Input
             isRequired
@@ -65,6 +142,8 @@ export default function RegisterForm() {
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your last name"
+            value={houseHold.guardianLastName}
+            onChange={e => updateHouseHold("guardianLastName", e.target.value)}
           />
           <Input
             isRequired
@@ -73,6 +152,8 @@ export default function RegisterForm() {
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your email"
+            value={houseHold.email}
+            onChange={e => updateHouseHold("email", e.target.value)}
           />
           <Input
             isRequired
@@ -81,6 +162,8 @@ export default function RegisterForm() {
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your phone number"
+            value={houseHold.phone}
+            onChange={e => updateHouseHold("phone", e.target.value)}
           />
         </div>
 
@@ -115,6 +198,16 @@ export default function RegisterForm() {
                 placeholder="Enter last name"
                 value={youth.lastName}
                 onChange={e => updateYouth(i, "lastName", e.target.value)}
+              />
+
+              <Input
+                isRequired
+                label="Age"
+                variant="bordered"
+                labelPlacement="outside"
+                placeholder="Enter age"
+                value={String(youth.age)}
+                onChange={e => updateYouth(i, "age", Number(e.target.value))}
               />
 
               <Select

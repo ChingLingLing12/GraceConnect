@@ -12,6 +12,7 @@ export interface Youth {
   lastSignedIn?: string;
   lastSignedOut?: string;
   family?: string;
+  records?: string[];
 }
 
 interface YouthCardProps {

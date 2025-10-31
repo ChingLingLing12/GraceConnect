@@ -73,6 +73,7 @@ export default function Dashboard() {
 
   const API_URL = 'http://127.0.0.1:4000';
   const YOUTH_URL = `${API_URL}/api/youth`;
+  const LOG_URL = `${API_URL}/api/log`;
 
     //fetch youths from backend functions
   const fetchYouths = async () => {
@@ -95,6 +96,25 @@ export default function Dashboard() {
     }
   }
 
+  const createLog = async (logEntry: { message: 'signIn' | 'signOut'; timestamp: string; }) => {
+    try {
+      const res = await fetch(LOG_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(logEntry),
+      });
+
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      console.log('Log created:', data);
+      return data.log._id;
+    } catch (error) {
+      console.error('Error creating log:', error);
+    }
+  };
+
   const editYouth = async (id: string, updates: Partial<Youth>) => {
     try {
       const res = await fetch(`${YOUTH_URL}/${id}`, {
@@ -111,6 +131,8 @@ export default function Dashboard() {
       console.error('Error updating youth:', error);
     }
   };
+
+  
 
   useEffect(() => {
     fetchYouths();
@@ -130,27 +152,40 @@ export default function Dashboard() {
     updateDateTime();
   }, []);
 
-const handleSignIn = (youth: Youth) => {
-    setYouths((prev: Youth[]) =>
-      prev.map((y) =>
-        y === youth
-          ? { ...y, signedIn: true, lastSignedIn: new Date().toISOString() }
-          : y
-      ) 
-    );
-    editYouth(youth._id!, { signedIn: true, lastSignedIn: new Date().toISOString() });
-    console.log("@@@", youth.lastSignedIn);
+const handleSignIn = async (youth: Youth) => {
+    try {
+      const logId = await createLog({ message: 'signIn', timestamp: new Date().toISOString() });
+
+      setYouths((prev: Youth[]) =>
+        prev.map((y) =>
+          y === youth
+            ? { ...y, signedIn: true, lastSignedIn: new Date().toISOString() }
+            : y
+        ) 
+      );
+      // Pass the logId in records - backend will merge with existing records
+      editYouth(youth._id!, { signedIn: true, records: logId });
+    } catch (error) {
+      console.error('Error signing in youth:', error);
+    }
   };
 
-  const handleSignOut = (youth: Youth) => {
-    setYouths((prev: Youth[]) =>
-      prev.map((y) =>
-        y === youth
-          ? { ...y, signedIn: false, lastSignedOut: new Date().toISOString() }
-          : y
-      )
-    );
-    editYouth(youth._id!, { signedIn: false, lastSignedOut: new Date().toISOString() });
+  const handleSignOut = async (youth: Youth) => {
+    try {
+      const logId = await createLog({ message: 'signOut', timestamp: new Date().toISOString() });
+
+      setYouths((prev: Youth[]) =>
+        prev.map((y) =>
+          y === youth
+            ? { ...y, signedIn: false, lastSignedOut: new Date().toISOString() }
+            : y
+        )
+      );
+      // Pass the logId in records - backend will merge with existing records
+      editYouth(youth._id!, { signedIn: false, records: logId });
+    } catch (error) {
+      console.error('Error signing out youth:', error);
+    }
   };
 
   const filteredYouths = youths.filter((youth) => {
