@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Input, Button, Card, CardBody, CardHeader } from "@heroui/react";
+import { Link, Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenu, NavbarMenuItem, NavbarMenuToggle } from "@heroui/react";
 import { Youth } from "./components/YouthCard";
-import YouthCard from "./components/YouthCard";
+import Image from "next/image";
+
+import Dashboard from "./pages/Dashboard";
+import Statistics from "./pages/Statistics";
+import Register from "./pages/Register";
 
 export enum Cell {
-  Year12="Year 12",
+  Year12="Year 12 Cell",
   Year89="Year 8/9 Cell",
   Year1011="Year 10/11 Cell",
   Year7="Year 7 Cell",
@@ -66,164 +70,118 @@ const sampleYouth: Youth[] = [
 
 export default function Home() {
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [youths, setYouths] = useState(sampleYouth);
-  const [filterMode, setFilterMode] = useState<"default" | "signedIn" | "signedOut">("default");
-  const [viewMode, setViewMode] = useState<"default" | "cell">("default");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<"dashboard" | "statistics" | "register">("dashboard");
 
-
-  // State for current date and time to avoid hydration mismatch
-  const [currentDateTime, setCurrentDateTime] = useState({ dateString: '', timeString: '' });
-
-  useEffect(() => {
-    const updateDateTime = () => {
-      const currentDate = new Date();
-      setCurrentDateTime({
-        dateString: currentDate.toLocaleDateString(),
-        timeString: currentDate.toLocaleTimeString()
-      });
-    };
-    updateDateTime();
-  }, []);
-
-const handleSignIn = (youth: Youth) => {
-    setYouths((prev) =>
-      prev.map((y) =>
-        y === youth
-          ? { ...y, signedIn: true, lastSignedIn: new Date().toISOString() }
-          : y
-      )
-    );
+  const handleSelect = (section: typeof activeSection) => {
+    // 👇 First close the menu, then update the section
+    setIsMenuOpen(false);
+    setTimeout(() => setActiveSection(section), 100); // delay to allow animation to finish
   };
 
-  const handleSignOut = (youth: Youth) => {
-    setYouths((prev) =>
-      prev.map((y) =>
-        y === youth
-          ? { ...y, signedIn: false, lastSignedOut: new Date().toISOString() }
-          : y
-      )
-    );
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case "statistics":
+        return <Statistics />;
+      case "register":
+        return <Register />;
+      default:
+        return <Dashboard />;
+    }
   };
 
-  const filteredYouths = youths.filter((youth) => {
-  // Search filter
-    const matchesSearch = `${youth.firstName} ${youth.lastName}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
-    // 3-part switch filter
-    const matchesSwitch =
-      filterMode === "default"
-        ? true
-        : filterMode === "signedIn"
-        ? youth.signedIn
-        : !youth.signedIn; // signedOut
-
-    return matchesSearch && matchesSwitch;
-});
-
-const groupedByCell = Object.values(Cell).map((cellName) => ({
-    cell: cellName,
-    youths: filteredYouths.filter((y) => y.cell === cellName),
-  }));
 
   return (
-     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
-    <div className="w-full max-w-6xl mx-auto px-4">
-      <h3 className="text-2xl font-semibold mb-6 text-center">
-        Grace Connect Check-In System
-      </h3>
-      <h3 className="mb-8 text-center text-gray-600">
-        {currentDateTime.dateString} | {currentDateTime.timeString}
-      </h3>
-     {/* Search Bar */}
-      <Input
-        placeholder="Search youth..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-4"
-        isClearable
-        onClear={() => setSearchTerm("")}
-      />
-
-       {/* 👁 VIEWING MODE */}
-      <div className="flex justify-center gap-2">
-        <Button
-          variant={viewMode === "default" ? "solid" : "flat"}
-          onPress={() => setViewMode("default")}
-        >
-          Default View
-        </Button>
-        <Button
-          variant={viewMode === "cell" ? "solid" : "flat"}
-          onPress={() => setViewMode("cell")}
-        >
-          Cell View
-        </Button>
-      </div>
-
-      {/* 3-part filter switch */}
-      <div className="flex border border-gray-900 rounded overflow-hidden mb-4">
-        {["default", "signedIn", "signedOut"].map(mode => (
-          <button
-            key={mode}
-            className={`flex-1 py-2 text-center font-medium
-              ${filterMode === mode ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"}
-              hover:bg-blue-500 hover:text-white transition-colors`}
-            onClick={() => setFilterMode(mode as "default" | "signedIn" | "signedOut")}
-          >
-            {mode === "default" ? "All" : mode === "signedIn" ? "Sign Out Mode" : "Sign In Mode"}
-          </button>
-        ))}
-      </div>
-
-      {/* 🧾 DISPLAY */}
-      {viewMode === "default" ? (
-        <div className="grid gap-2">
-          {filteredYouths.length > 0 ? (
-            filteredYouths.map((y, i) => (
-              <YouthCard
-                key={i}
-                youth={y}
-                onSignIn={handleSignIn}
-                onSignOut={handleSignOut}
-              />
-            ))
-          ) : (
-            <p className="text-center text-gray-500">No matching youth found.</p>
-          )}
-        </div>
-      ) : (
-         // 🟩 4-CELL GRID VIEW
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {groupedByCell.map(({ cell, youths }) => (
-            <Card
-              key={cell}
-              className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md"
+    <div>
+        <Navbar onMenuOpenChange={setIsMenuOpen} isMenuOpen={isMenuOpen} className="bg-gray-800 text-white">
+          <NavbarBrand>
+            <Image onClick={() => handleSelect("dashboard")} src="/GMC logo3.jpeg" alt="App Logo" width="55" height="55" style={{ borderRadius: "15px" }}/>
+          </NavbarBrand>
+          <NavbarContent className="hidden sm:flex gap-6" justify="center">
+            <NavbarItem>
+               <button
+                  onClick={() => handleSelect("dashboard")}
+                  className={`hover:text-gray-300 transition ${
+                    activeSection === "dashboard" ? "text-blue-400" : "text-white"
+                  }`}
+                >
+                  Dashboard
+              </button>
+            </NavbarItem>
+            <NavbarItem isActive>
+               <button
+              onClick={() => handleSelect("statistics")}
+              className={`hover:text-gray-300 transition ${
+                activeSection === "statistics" ? "text-blue-400" : "text-white"
+              }`}
             >
-              <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3">
-                {cell}
-              </CardHeader>
-              <CardBody className="max-h-[500px] overflow-y-auto px-4 py-4 space-y-4">
-                {youths.length > 0 ? (
-                  youths.map((y, i) => (
-                    <div key={i} className="rounded-xl overflow-hidden">
-                      <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} />
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 italic text-center py-6">
-                    No youths in this cell.
-                  </p>
-                )}
-              </CardBody>
-            </Card>
-          ))}
-        </div>
-      )}
+              Statistics
+            </button>
+            </NavbarItem>
+            <NavbarItem>
+             <button
+              onClick={() => handleSelect("register")}
+              className={`hover:text-gray-300 transition ${
+                activeSection === "register" ? "text-blue-400" : "text-white"
+              }`}
+            >
+              Register
+            </button>
+            </NavbarItem>
+          </NavbarContent>
+
+          {/* Right side (mobile toggle) */}
+        <NavbarContent justify="end">
+          <NavbarMenuToggle
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            className="sm:hidden"
+          />
+        </NavbarContent>
+
+          {/* Mobile Menu */}
+        <NavbarMenu className="bg-gray-900 text-white">
+          <NavbarMenuItem>
+            <button
+              onClick={() => {
+                handleSelect("dashboard");
+                setIsMenuOpen(false);
+              }}
+              className="w-full text-left hover:text-gray-300"
+            >
+              Dashboard
+            </button>
+          </NavbarMenuItem>
+          <NavbarMenuItem>
+            <button
+              onClick={() => {
+                handleSelect("statistics");
+                setIsMenuOpen(false);
+              }}
+              className="w-full text-left hover:text-gray-300"
+            >
+              Statistics
+            </button>
+          </NavbarMenuItem>
+          <NavbarMenuItem>
+            <button
+              onClick={() => {
+                handleSelect("register");
+                setIsMenuOpen(false);
+              }}
+              className="w-full text-left hover:text-gray-300"
+            >
+              Register
+            </button>
+          </NavbarMenuItem>
+        </NavbarMenu>
+        </Navbar>
+
+        
+        <div>{renderSection()}</div>
+     
     </div>
-    </main>
   
   )
 }

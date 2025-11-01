@@ -4,6 +4,7 @@ import React from "react";
 import { format } from "date-fns";
 
 export interface Youth {
+  _id?: string; // MongoDB ID from backend
   firstName: string;
   lastName: string;
   signedIn: boolean;
@@ -11,6 +12,7 @@ export interface Youth {
   lastSignedIn?: string;
   lastSignedOut?: string;
   family?: string;
+  records?: string[];
 }
 
 interface YouthCardProps {
