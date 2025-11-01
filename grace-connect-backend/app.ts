@@ -26,7 +26,6 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/graceconnec
 });
 
 // Routes
-app.get("/",  "Backend root is live");
 app.get ('/api/log', logController.getLogs);
 app.post('/api/log', logController.createLog);
 
