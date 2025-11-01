@@ -434,7 +434,6 @@ const groupedByHouseHold = households.map((houseHold) => ({
                     youths.map((y, i) => (
                       <div key={i} className="rounded-xl overflow-hidden">
                         <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} />
-                        <p>{y._id}</p>
                       </div>
                     ))
                   ) : (
@@ -518,7 +517,7 @@ const groupedByHouseHold = households.map((houseHold) => ({
                 )}
                 <div className="p-4">
                   <Button onClick={() => openCreateChildMenu(houseHold._id)}>
-                    Edit Household {houseHold._id}
+                    add child
                   </Button>
                 </div>
               </Card>
