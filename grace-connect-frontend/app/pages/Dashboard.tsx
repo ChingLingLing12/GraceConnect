@@ -42,7 +42,7 @@ export default function Dashboard() {
   const [households, setHouseholds] = useState<any[]>([]);
   const [selectedHousehold, setSelectedHousehold] = useState<string | null>(null);
 
-  const API_URL = 'http://127.0.0.1:4000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000';
   const YOUTH_URL = `${API_URL}/api/youth`;
   const LOG_URL = `${API_URL}/api/log`;
   const HOUSEHOLD_URL = `${API_URL}/api/household`;

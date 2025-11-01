@@ -61,7 +61,7 @@ export default function RegisterForm() {
   };
 
   //API calls to backend
-  const API_URL = 'http://127.0.0.1:4000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000';
   const YOUTH_URL = `${API_URL}/api/youth`;
   const HOUSEHOLD_URL = `${API_URL}/api/household`;
 
