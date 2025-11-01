@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Input, Button, Card, CardBody, CardHeader } from "@heroui/react";
+import { useState, useEffect, Children } from 'react';
+import { Input, Button, Card, CardBody, CardHeader, Select, SelectItem, Switch } from "@heroui/react";
 import { Youth } from "../components/YouthCard";
 import YouthCard from "../components/YouthCard";
 
@@ -21,47 +21,16 @@ const sampleYouth: Youth[] = [
     lastSignedOut: "2025-10-26T12:00:00",
     cell: Cell.Year1011
   },
-  {
-    firstName: "Bob",
-    lastName: "Johnson",
-    signedIn: true,
-    lastSignedIn: "2025-10-26T13:00:00",
-    lastSignedOut: "2025-10-26T09:00:00",
-    cell: Cell.Year12
-  },
-  {
-    firstName: "Charlie",
-    lastName: "Lee",
-    signedIn: false,
-    lastSignedIn: "2025-10-26T07:00:00",
-    lastSignedOut: "2025-10-26T14:00:00",
-    cell: Cell.Year89
-  },
-   {
-    firstName: "Joseph",
-    lastName: "Smith",
-    signedIn: false,
-    lastSignedIn: "2025-10-26T08:00:00",
-    lastSignedOut: "2025-10-26T12:00:00",
-    cell: Cell.Year7
-  },
-  {
-    firstName: "Jess",
-    lastName: "Johnson",
-    signedIn: true,
-    lastSignedIn: "2025-10-26T13:00:00",
-    lastSignedOut: "2025-10-26T09:00:00",
-    cell: Cell.Year12
-  },
-  {
-    firstName: "Catherine",
-    lastName: "Lee",
-    signedIn: false,
-    lastSignedIn: "2025-10-26T07:00:00",
-    lastSignedOut: "2025-10-26T14:00:00",
-    cell: Cell.Year1011
-  },
 ];
+
+export interface newYouth {
+  id: string;
+  firstName: string;
+  lastName: string;
+  age: number;
+  signedIn: boolean;
+  cell?: Cell;
+}
 
 
 export default function Dashboard() {
@@ -69,13 +38,133 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [youths, setYouths] = useState(sampleYouth);
   const [filterMode, setFilterMode] = useState<"default" | "signedIn" | "signedOut">("default");
-  const [viewMode, setViewMode] = useState<"default" | "cell">("default");
+  const [viewMode, setViewMode] = useState<"default" | "cell" | "houseHold">("default");
+  const [households, setHouseholds] = useState<any[]>([]);
+  const [selectedHousehold, setSelectedHousehold] = useState<string | null>(null);
 
   const API_URL = 'http://127.0.0.1:4000';
   const YOUTH_URL = `${API_URL}/api/youth`;
   const LOG_URL = `${API_URL}/api/log`;
+  const HOUSEHOLD_URL = `${API_URL}/api/household`;
 
-    //fetch youths from backend functions
+  //add youth sections
+    const addYouth = () => {
+    setNewYouths(prev => [
+      ...prev,
+      { id: String(Date.now()) + Math.random(), firstName: "", lastName: "", age: 0, signedIn: false },
+    ]);
+  };
+    const removeYouth = (index: number) => {
+    setNewYouths(prev => prev.filter((_, i) => i !== index));
+  };
+  const [newYouths, setNewYouths] = useState<newYouth[]>([
+    { id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false },
+  ]);
+
+  const updateYouth = <K extends keyof newYouth>(index: number, field: K, value: newYouth[K]) => {
+    setNewYouths(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
+  };
+
+  const createYouth = async (youth: Youth): Promise<string> => {
+    try {
+      const response = await fetch(YOUTH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(youth),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to create youth");
+      }
+      const data = await response.json();
+      console.log("Youth created:", data);
+      // Return the MongoDB _id from the created youth
+      return data.child._id;
+    } catch (error) {
+      console.error("Error creating youth:", error);
+      throw error;
+    }
+  };
+
+  const openCreateChildMenu = async (houseHoldId: string) => {
+    setSelectedHousehold(houseHoldId);
+    console.log("Selected Household ID:", houseHoldId);
+    // editHousehold(houseHoldId, { children: childIds });
+  };
+
+
+
+
+
+
+  //fetch households from backend functions
+  const fetchHouseholds = async () => {
+    try{
+      const res = await fetch(`${HOUSEHOLD_URL}`);
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      console.log('Fetched households:', data);
+      
+      // Check if the response is an array directly or has households property
+      if (Array.isArray(data)) {
+        setHouseholds(data);
+      } else if (data.households && Array.isArray(data.households)) {
+        setHouseholds(data.households);
+      } else {
+        console.warn('Unexpected household API response format:', data);
+        setHouseholds([]); // Set empty array if format is unexpected
+      }
+    } catch (error) {
+      console.error('Error fetching households:', error);
+      setHouseholds([]); // Set empty array on error
+    }
+  };
+
+  const editHousehold = async (id: string, updates: Partial<any>) => {
+    try {
+      const res = await fetch(`${HOUSEHOLD_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      console.log('Updated household:', data);
+    } catch (error) {
+      console.error('Error updating household:', error);
+    }
+  };
+
+  const handleSubmit = async (houseHoldID: string, e: React.FormEvent<HTMLFormElement>) => {    
+      e.preventDefault();
+      console.log("@@@@@@@@", houseHoldID);
+      try {
+        const childIDs: string[] = [];
+        for (const newYouth of newYouths) {
+          const childId = await createYouth(newYouth);
+          childIDs.push(childId);
+        }
+        await editHousehold(houseHoldID, {children: childIDs})
+        alert("Registration completed successfully!");
+      } catch (error) {
+        console.error("Error during registration:", error);
+        alert("Registration failed. Please try again.");
+      }
+      await fetchYouths();
+      await fetchHouseholds();
+      setNewYouths([{ id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false }]);
+      setSelectedHousehold(null);
+    };
+
+
+  //fetch youths from backend functions
   const fetchYouths = async () => {
     try{
       const res = await fetch(`${YOUTH_URL}`);
@@ -132,10 +221,13 @@ export default function Dashboard() {
     }
   };
 
+
   
 
   useEffect(() => {
     fetchYouths();
+    fetchHouseholds();
+    console.log("Households fetched on mount:", households);
   }, []);
 
   // State for current date and time to avoid hydration mismatch
@@ -210,24 +302,40 @@ const groupedByCell = Object.values(Cell).map((cellName) => ({
     youths: filteredYouths.filter((y) => y.cell === cellName),
   }));
 
+const groupedByHouseHold = households.map((houseHold) => ({
+    houseHold: houseHold,
+    youths: filteredYouths.filter((y) => {
+      // houseHold.children contains populated objects with _id properties
+      if (!houseHold.children || !Array.isArray(houseHold.children)) {
+        return false;
+      }
+      // Extract IDs from populated children objects
+      const childIds = houseHold.children.map((child: any) => child._id || child);
+      return childIds.includes(y._id);
+    }),
+  }));
+
+  console.log('Households:', households);
+  console.log('Grouped by household:', groupedByHouseHold);
+
   return (
-     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12 ">
-    <div className="w-full max-w-6xl mx-auto px-4">
-      <h3 className="text-2xl font-semibold mb-6 text-center">
-        Grace Connect Check-In System
-      </h3>
-      <h3 className="mb-8 text-center text-gray-600">
-        {currentDateTime.dateString} | {currentDateTime.timeString}
-      </h3>
-     {/* Search Bar */}
-      <Input
-        placeholder="Search youth..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-4"
-        isClearable
-        onClear={() => setSearchTerm("")}
-      />
+    <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12 ">
+      <div className="w-full max-w-6xl mx-auto px-4">
+        <h3 className="text-2xl font-semibold mb-6 text-center">
+          Grace Connect Check-In System
+        </h3>
+        <h3 className="mb-8 text-center text-gray-600">
+          {currentDateTime.dateString} | {currentDateTime.timeString}
+        </h3>
+      {/* Search Bar */}
+        <Input
+          placeholder="Search youth..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="mb-4"
+          isClearable
+          onClear={() => setSearchTerm("")}
+        />
 
        {/* 👁 VIEWING MODE */}
       <div className="flex justify-center gap-2">
@@ -242,6 +350,12 @@ const groupedByCell = Object.values(Cell).map((cellName) => ({
           onPress={() => setViewMode("cell")}
         >
           Cell View
+        </Button>
+        <Button
+          variant={viewMode === "houseHold" ? "solid" : "flat"}
+          onPress={() => setViewMode("houseHold")}
+        >
+          Household View
         </Button>
       </div>
 
@@ -276,8 +390,8 @@ const groupedByCell = Object.values(Cell).map((cellName) => ({
             <p className="text-center text-gray-500">No matching youth found.</p>
           )}
         </div>
-      ) : (
-         // 🟩 4-CELL GRID VIEW
+      ) : viewMode === "cell" ? (
+        // 🟩 4-CELL GRID VIEW
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {groupedByCell.map(({ cell, youths }) => (
             <Card
@@ -303,9 +417,121 @@ const groupedByCell = Object.values(Cell).map((cellName) => ({
             </Card>
           ))}
         </div>
-      )}
-    </div>
-    </main>  
-  )
+      ) : viewMode === "houseHold" ? (
+        // 🏠 HOUSEHOLD VIEW
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          {groupedByHouseHold.length > 0 ? (
+            groupedByHouseHold.map(({ houseHold, youths }) => (
+              <Card
+                key={houseHold._id}
+                className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md"
+              >
+                <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3">
+                  {houseHold.guardianLastName} Family ({houseHold.guardianFirstName})
+                </CardHeader>
+                <CardBody className="max-h-[500px] overflow-y-auto px-4 py-4 space-y-4">
+                  {youths.length > 0 ? (
+                    youths.map((y, i) => (
+                      <div key={i} className="rounded-xl overflow-hidden">
+                        <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+                        <p>{y._id}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 italic text-center py-6">
+                      No youths in this household.
+                    </p>
+                  )}
+                </CardBody>
+                {selectedHousehold === houseHold._id && (
+                  <form onSubmit={(e) => handleSubmit(houseHold._id, e)} className="flex flex-wrap gap-4 justify-center p-4">
+                    {newYouths.map((youth, i) => (
+                      <div key={youth.id} className="border p-4 rounded-2xl space-y-3 flex-none w-[280px]">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-sm font-semibold text-white">Youth {i + 1}</h3>
+                          {newYouths.length > 1 && (
+                            <Button size="sm" variant="flat" color="danger" onPress={() => removeYouth(i)}>
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+
+                        <Input
+                          isRequired
+                          label="First Name"
+                          variant="bordered"
+                          labelPlacement="outside"
+                          placeholder="Enter first name"
+                          value={youth.firstName}
+                          onChange={e => updateYouth(i, "firstName", e.target.value)}
+                        />
+
+                        <Input
+                          isRequired
+                          label="Last Name"
+                          variant="bordered"
+                          labelPlacement="outside"
+                          placeholder="Enter last name"
+                          value={youth.lastName}
+                          onChange={e => updateYouth(i, "lastName", e.target.value)}
+                        />
+
+                        <Input
+                          isRequired
+                          label="Age"
+                          variant="bordered"
+                          labelPlacement="outside"
+                          placeholder="Enter age"
+                          value={String(youth.age)}
+                          onChange={e => updateYouth(i, "age", Number(e.target.value))}
+                        />
+
+                        <Select
+                          label="Cell Group"
+                          placeholder="Select a cell group" variant="bordered"
+                          selectedKeys={youth.cell ? new Set([youth.cell]) : new Set()}
+                          onSelectionChange={keys => {
+                            const selected = Array.from(keys)[0] as Cell | undefined;
+                            updateYouth(i, "cell", selected);
+                          }}
+                        >
+                          {Object.values(Cell).map(val => (
+                            <SelectItem key={val}>{val}</SelectItem>
+                          ))}
+                        </Select>
+
+                        <Switch
+                          isSelected={youth.signedIn}
+                          onValueChange={v => updateYouth(i, "signedIn", v)}
+                        >
+                          Signed In
+                        </Switch>
+                      </div>
+                    ))}
+                    <Button type="button" variant="bordered" onPress={addYouth}>
+                      + Add Another Youth
+                    </Button>
+                    <Button type="submit" color="primary">
+                      Submit
+                    </Button>
+                  </form>
+                )}
+                <div className="p-4">
+                  <Button onClick={() => openCreateChildMenu(houseHold._id)}>
+                    Edit Household {houseHold._id}
+                  </Button>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-2">
+              <p className="text-center text-gray-500">No households found. Check console for API response.</p>
+            </div>
+          )}
+        </div>
+      ) : null}
+      </div>
+    </main>
+  );
 }
 
