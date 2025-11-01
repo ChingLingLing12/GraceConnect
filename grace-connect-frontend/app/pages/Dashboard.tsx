@@ -394,14 +394,15 @@ const groupedByHouseHold = households.map((houseHold) => ({
         // 🟩 4-CELL GRID VIEW
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {groupedByCell.map(({ cell, youths }) => (
-            <Card
-              key={cell}
-              className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md"
-            >
-              <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3">
-                {cell}
-              </CardHeader>
-              <CardBody className="max-h-[500px] overflow-y-auto px-4 py-4 space-y-4">
+          <Card
+            key={cell}
+            className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md"
+          >
+            <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3">
+              {cell}
+            </CardHeader>
+            <CardBody className="px-4 py-4">
+              <div className="max-h-[500px] overflow-y-auto space-y-4">
                 {youths.length > 0 ? (
                   youths.map((y, i) => (
                     <div key={i} className="rounded-xl overflow-hidden">
@@ -413,8 +414,11 @@ const groupedByHouseHold = households.map((houseHold) => ({
                     No youths in this cell.
                   </p>
                 )}
-              </CardBody>
-            </Card>
+              </div>
+            </CardBody>
+          </Card>
+
+
           ))}
         </div>
       ) : viewMode === "houseHold" ? (
@@ -424,103 +428,108 @@ const groupedByHouseHold = households.map((houseHold) => ({
             groupedByHouseHold.map(({ houseHold, youths }) => (
               <Card
                 key={houseHold._id}
-                className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md"
+                className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md flex flex-col max-h-[600px]"
               >
-                <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3">
+                {/* Header stays fixed */}
+                <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3 flex-none">
                   {houseHold.guardianLastName} Family ({houseHold.guardianFirstName})
                 </CardHeader>
-                <CardBody className="max-h-[500px] overflow-y-auto px-4 py-4 space-y-4">
-                  {youths.length > 0 ? (
-                    youths.map((y, i) => (
-                      <div key={i} className="rounded-xl overflow-hidden">
-                        <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500 italic text-center py-6">
-                      No youths in this household.
-                    </p>
+
+                {/* Scrollable content */}
+                <CardBody className="px-4 py-4 overflow-y-auto flex-1 space-y-4">
+                  <div className="space-y-4">
+                    {youths.length > 0 ? (
+                      youths.map((y, i) => (
+                        <div key={i} className="rounded-xl overflow-hidden">
+                          <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 italic text-center py-6">
+                        No youths in this household.
+                      </p>
+                    )}
+                  </div>
+
+                  {selectedHousehold === houseHold._id && (
+                    <form onSubmit={(e) => handleSubmit(houseHold._id, e)} className="flex flex-wrap gap-4 justify-center p-4">
+                      {newYouths.map((youth, i) => (
+                        <div key={youth.id} className="border p-4 rounded-2xl space-y-3 flex-none w-[280px]">
+                          <div className="flex justify-between items-center">
+                            <h3 className="text-sm font-semibold text-white">Youth {i + 1}</h3>
+                            {newYouths.length > 1 && (
+                              <Button size="sm" variant="flat" color="danger" onPress={() => removeYouth(i)}>
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                          <Input
+                            isRequired
+                            label="First Name"
+                            variant="bordered"
+                            labelPlacement="outside"
+                            placeholder="Enter first name"
+                            value={youth.firstName}
+                            onChange={e => updateYouth(i, "firstName", e.target.value)}
+                          />
+                          <Input
+                            isRequired
+                            label="Last Name"
+                            variant="bordered"
+                            labelPlacement="outside"
+                            placeholder="Enter last name"
+                            value={youth.lastName}
+                            onChange={e => updateYouth(i, "lastName", e.target.value)}
+                          />
+                          <Input
+                            isRequired
+                            label="Age"
+                            variant="bordered"
+                            labelPlacement="outside"
+                            placeholder="Enter age"
+                            value={String(youth.age)}
+                            onChange={e => updateYouth(i, "age", Number(e.target.value))}
+                          />
+                          <Select
+                            label="Cell Group"
+                            placeholder="Select a cell group"
+                            variant="bordered"
+                            selectedKeys={youth.cell ? new Set([youth.cell]) : new Set()}
+                            onSelectionChange={keys => {
+                              const selected = Array.from(keys)[0] as Cell | undefined;
+                              updateYouth(i, "cell", selected);
+                            }}
+                          >
+                            {Object.values(Cell).map(val => (
+                              <SelectItem key={val}>{val}</SelectItem>
+                            ))}
+                          </Select>
+                          <Switch
+                            isSelected={youth.signedIn}
+                            onValueChange={v => updateYouth(i, "signedIn", v)}
+                          >
+                            Signed In
+                          </Switch>
+                        </div>
+                      ))}
+                      <Button type="button" variant="bordered" onPress={addYouth}>
+                        + Add Another Youth
+                      </Button>
+                      <Button type="submit" color="primary">
+                        Submit
+                      </Button>
+                    </form>
                   )}
                 </CardBody>
-                {selectedHousehold === houseHold._id && (
-                  <form onSubmit={(e) => handleSubmit(houseHold._id, e)} className="flex flex-wrap gap-4 justify-center p-4">
-                    {newYouths.map((youth, i) => (
-                      <div key={youth.id} className="border p-4 rounded-2xl space-y-3 flex-none w-[280px]">
-                        <div className="flex justify-between items-center">
-                          <h3 className="text-sm font-semibold text-white">Youth {i + 1}</h3>
-                          {newYouths.length > 1 && (
-                            <Button size="sm" variant="flat" color="danger" onPress={() => removeYouth(i)}>
-                              Remove
-                            </Button>
-                          )}
-                        </div>
 
-                        <Input
-                          isRequired
-                          label="First Name"
-                          variant="bordered"
-                          labelPlacement="outside"
-                          placeholder="Enter first name"
-                          value={youth.firstName}
-                          onChange={e => updateYouth(i, "firstName", e.target.value)}
-                        />
-
-                        <Input
-                          isRequired
-                          label="Last Name"
-                          variant="bordered"
-                          labelPlacement="outside"
-                          placeholder="Enter last name"
-                          value={youth.lastName}
-                          onChange={e => updateYouth(i, "lastName", e.target.value)}
-                        />
-
-                        <Input
-                          isRequired
-                          label="Age"
-                          variant="bordered"
-                          labelPlacement="outside"
-                          placeholder="Enter age"
-                          value={String(youth.age)}
-                          onChange={e => updateYouth(i, "age", Number(e.target.value))}
-                        />
-
-                        <Select
-                          label="Cell Group"
-                          placeholder="Select a cell group" variant="bordered"
-                          selectedKeys={youth.cell ? new Set([youth.cell]) : new Set()}
-                          onSelectionChange={keys => {
-                            const selected = Array.from(keys)[0] as Cell | undefined;
-                            updateYouth(i, "cell", selected);
-                          }}
-                        >
-                          {Object.values(Cell).map(val => (
-                            <SelectItem key={val}>{val}</SelectItem>
-                          ))}
-                        </Select>
-
-                        <Switch
-                          isSelected={youth.signedIn}
-                          onValueChange={v => updateYouth(i, "signedIn", v)}
-                        >
-                          Signed In
-                        </Switch>
-                      </div>
-                    ))}
-                    <Button type="button" variant="bordered" onPress={addYouth}>
-                      + Add Another Youth
-                    </Button>
-                    <Button type="submit" color="primary">
-                      Submit
-                    </Button>
-                  </form>
-                )}
-                <div className="p-4">
+                {/* Footer / add child button stays fixed */}
+                <div className="p-4 flex-none">
                   <Button onClick={() => openCreateChildMenu(houseHold._id)}>
-                    add child
+                    Add Child
                   </Button>
                 </div>
               </Card>
+
             ))
           ) : (
             <div className="col-span-2">
