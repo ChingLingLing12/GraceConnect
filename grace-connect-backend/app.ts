@@ -11,7 +11,7 @@ const port = process.env.PORT || 4000;
 
 // CORS configuration
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000',"https://grace-connect.vercel.app"],
     credentials: true,
     optionsSuccessStatus: 200
 }));
@@ -26,6 +26,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/graceconnec
 });
 
 // Routes
+app.get("/",  "Backend root is live");
 app.get ('/api/log', logController.getLogs);
 app.post('/api/log', logController.createLog);
 
