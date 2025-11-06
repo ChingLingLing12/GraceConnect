@@ -53,7 +53,7 @@ export const childController = {
 
     editChild: async (req: any, res: any) => {
         try {
-            const { id } = req.params;
+            const { _id } = req.params;
             const updates = req.body;
             
             // Handle timestamp updates for sign-in/sign-out
@@ -71,13 +71,13 @@ export const childController = {
             }
             
             if (updates.records) {
-                const selectedChild = await Child.findById(id);
+                const selectedChild = await Child.findById(_id);
                 if (selectedChild) {
                     updates.records = [...(selectedChild.records || []), ...(Array.isArray(updates.records) ? updates.records : [updates.records])];
                 }
             }
             
-            const updatedChild = await Child.findByIdAndUpdate(id, updates, { new: true }).populate('records');
+            const updatedChild = await Child.findByIdAndUpdate(_id, updates, { new: true }).populate('records');
             if (!updatedChild) {
                 return res.status(404).json({ success: false, error: 'Child not found' });
             }

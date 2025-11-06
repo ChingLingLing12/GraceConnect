@@ -3,6 +3,16 @@ import { Card, CardBody, Button } from "@heroui/react"
 import React from "react";
 import { format } from "date-fns";
 
+
+
+export interface RecordEntry {
+  _id: string;
+  message: string;
+  timestamp: string;
+  __v: number;
+}
+
+
 export interface Youth {
   _id?: string; // MongoDB ID from backend
   firstName: string;
@@ -12,7 +22,7 @@ export interface Youth {
   lastSignedIn?: string;
   lastSignedOut?: string;
   family?: string;
-  records?: string[];
+  records?: RecordEntry[];
 }
 
 interface YouthCardProps {

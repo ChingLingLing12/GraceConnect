@@ -8,12 +8,14 @@ import Image from "next/image";
 import Dashboard from "./pages/Dashboard";
 import Statistics from "./pages/Statistics";
 import Register from "./pages/Register";
+import EditDatabase from './pages/EditDatabase';
 
 export enum Cell {
   Year12="Year 12 Cell",
   Year89="Year 8/9 Cell",
   Year1011="Year 10/11 Cell",
   Year7="Year 7 Cell",
+  SundaySchool="Sunday School"
 }
 
 const sampleYouth: Youth[] = [
@@ -72,7 +74,7 @@ export default function Home() {
 
   const [youths, setYouths] = useState(sampleYouth);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<"dashboard" | "statistics" | "register">("dashboard");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "statistics" | "Edit Database" | "register">("dashboard");
 
   const handleSelect = (section: typeof activeSection) => {
     // 👇 First close the menu, then update the section
@@ -85,6 +87,8 @@ export default function Home() {
     switch (activeSection) {
       case "statistics":
         return <Statistics />;
+      case "Edit Database":
+        return <EditDatabase />;
       case "register":
         return <Register />;
       default:
@@ -100,8 +104,9 @@ export default function Home() {
             <Image onClick={() => handleSelect("dashboard")} src="/GMC logo3.jpeg" alt="App Logo" width="55" height="55" style={{ borderRadius: "15px" }}/>
           </NavbarBrand>
           <NavbarContent className="hidden sm:flex gap-6" justify="center">
+
             <NavbarItem>
-               <button
+              <button
                   onClick={() => handleSelect("dashboard")}
                   className={`hover:text-gray-300 transition ${
                     activeSection === "dashboard" ? "text-blue-400" : "text-white"
@@ -110,16 +115,29 @@ export default function Home() {
                   Dashboard
               </button>
             </NavbarItem>
-            <NavbarItem isActive>
+
+            <NavbarItem>
+              <button
+                onClick={() => handleSelect("statistics")}
+                className={`hover:text-gray-300 transition ${
+                  activeSection === "statistics" ? "text-blue-400" : "text-white"
+                }`}
+              > 
+              Statistics
+            </button>
+            </NavbarItem>
+
+            <NavbarItem>
                <button
-              onClick={() => handleSelect("statistics")}
+              onClick={() => handleSelect("Edit Database")}
               className={`hover:text-gray-300 transition ${
                 activeSection === "statistics" ? "text-blue-400" : "text-white"
               }`}
             >
-              Statistics
+              Edit Database
             </button>
             </NavbarItem>
+
             <NavbarItem>
              <button
               onClick={() => handleSelect("register")}

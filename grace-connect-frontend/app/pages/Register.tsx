@@ -8,6 +8,7 @@ export enum Cell {
   Year89 = "Year 8/9 Cell",
   Year1011 = "Year 10/11 Cell",
   Year7 = "Year 7 Cell",
+  SundaySchool="Sunday School"
 }
 export interface HouseHold {
   id: string;
