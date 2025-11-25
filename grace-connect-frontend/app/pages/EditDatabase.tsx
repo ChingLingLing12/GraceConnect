@@ -3,24 +3,17 @@ import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell} from "@
 import { CardHeader, Select, SelectItem, Switch } from "@heroui/react";
 
 import { useState, useEffect} from "react";
-import { Youth } from "../components/YouthCard";
-import { HouseHold } from "./Register";
+import {Cell, HouseHold, Youth } from '../models'
 
 
 
-export enum Cell {
-    Year12="Year 12 Cell",
-    Year89="Year 8/9 Cell",
-    Year1011="Year 10/11 Cell",
-    Year7="Year 7 Cell",
-    SundaySchool="Sunday School"
-}
 
 
 const sampleYouth: Youth[] = [
     {
         firstName: "Alice",
         lastName: "Smith",
+        age: 12,
         signedIn: false,
         lastSignedIn: "2025-10-26T08:00:00",
         lastSignedOut: "2025-10-26T12:00:00",

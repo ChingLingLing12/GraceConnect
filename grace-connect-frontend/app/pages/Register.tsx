@@ -2,38 +2,15 @@
 import React, { useState } from "react";
 import { Input, Button, Select, SelectItem, Switch } from "@heroui/react";
 import { create } from "domain";
+import {Cell, HouseHold, Youth } from '../models'
 
-export enum Cell {
-  Year12 = "Year 12 Cell",
-  Year89 = "Year 8/9 Cell",
-  Year1011 = "Year 10/11 Cell",
-  Year7 = "Year 7 Cell",
-  SundaySchool="Sunday School"
-}
-export interface HouseHold {
-  id: string;
-  guardianFirstName: string;
-  guardianLastName: string;
-  email: string;
-  phone: string;
-  children?: Youth[];
-}
-
-export interface Youth {
-  id: string;
-  firstName: string;
-  lastName: string;
-  age: number;
-  signedIn: boolean;
-  cell?: Cell;
-}
 
 export default function RegisterForm() {
   const [houseHold, setHouseHold] = useState<HouseHold>(
-    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] } 
+    { _id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] } 
   );
   const [youths, setYouths] = useState<Youth[]>([
-    { id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false },
+    { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false },
   ]);
 
   const updateHouseHold = <K extends keyof HouseHold>(field: K, value: HouseHold[K]) => {
@@ -171,7 +148,7 @@ export default function RegisterForm() {
         {/* Youth cards below */}
         <div className="flex flex-wrap gap-4 justify-center">
           {youths.map((youth, i) => (
-            <div key={youth.id} className="border p-4 rounded-2xl space-y-3 flex-none w-[280px]">
+            <div key={youth._id} className="border p-4 rounded-2xl space-y-3 flex-none w-[280px]">
               <div className="flex justify-between items-center">
                 <h3 className="text-sm font-semibold text-white">Youth {i + 1}</h3>
                 {youths.length > 1 && (

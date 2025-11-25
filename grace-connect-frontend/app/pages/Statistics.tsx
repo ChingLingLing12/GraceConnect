@@ -2,27 +2,19 @@ import { Input, Card, CardBody, Button, Accordion, AccordionItem } from "@heroui
 import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell} from "@heroui/react";
 
 import { useState, useEffect} from "react";
-import { Youth } from "../components/YouthCard";
+import {Cell, HouseHold, Youth } from '../models'
 
-
-
-export enum Cell {
-    Year12="Year 12 Cell",
-    Year89="Year 8/9 Cell",
-    Year1011="Year 10/11 Cell",
-    Year7="Year 7 Cell",
-    SundaySchool="Sunday School"
-}
 
 
 const sampleYouth: Youth[] = [
     {
-        firstName: "Alice",
-        lastName: "Smith",
+        firstName: "Jin",
+        lastName: "Lee",
         signedIn: false,
         lastSignedIn: "2025-10-26T08:00:00",
         lastSignedOut: "2025-10-26T12:00:00",
-        cell: Cell.Year1011
+        cell: Cell.Year7,
+        age: 82
     },
 ];
 
@@ -152,7 +144,7 @@ export default function Statistics() {
                     <TableBody>
                         {filteredYouths.length > 0 ? (
                         filteredYouths.flatMap((y, i) =>
-                            y.records?.map((r, idx) => (
+                            y.records?.map(({ r, idx }:any) => (
                             <TableRow key={`${i}-${idx}`} className={r.message === "signIn" ? "bg-yellow-500 text-black" : ""}>
                                 <TableCell>{y.firstName}</TableCell>
                                 <TableCell>{y.lastName}</TableCell>

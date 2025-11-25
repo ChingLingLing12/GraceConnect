@@ -2,36 +2,12 @@
 import { Card, CardBody, Button } from "@heroui/react"
 import React from "react";
 import { format } from "date-fns";
+import {Cell, HouseHold, Youth, RecordEntry, YouthCardProps } from '../models'
 
 
 
-export interface RecordEntry {
-  _id: string;
-  message: string;
-  timestamp: string;
-  __v: number;
-}
 
-
-export interface Youth {
-  _id?: string; // MongoDB ID from backend
-  firstName: string;
-  lastName: string;
-  signedIn: boolean;
-  cell?: string;
-  lastSignedIn?: string;
-  lastSignedOut?: string;
-  family?: string;
-  records?: RecordEntry[];
-}
-
-interface YouthCardProps {
-  youth: Youth;
-  onSignIn: (youth: Youth) => void;
-  onSignOut: (youth: Youth) => void;
-}
-
-const YouthCard: React.FC<YouthCardProps> = ({ youth, onSignIn, onSignOut }) => {
+const YouthCard: React.FC<YouthCardProps> = ({ youth, onSignIn, onSignOut, editMode }) => {
   const latestTime = youth.lastSignedIn && youth.lastSignedOut
     ? new Date(youth.lastSignedIn) > new Date(youth.lastSignedOut)
       ? youth.lastSignedIn
@@ -49,7 +25,7 @@ const YouthCard: React.FC<YouthCardProps> = ({ youth, onSignIn, onSignOut }) => 
             <p className="text-red-400 text-sm">Last Signed Out: {format(new Date(latestTime), "EEE dd/MM HH:mm")}</p>
           )}
         </div>
-        <div className="mt-2 md:mt-0">
+        <div className="mt-2 md:mt-0 flex flex-row items-end gap-2">
             {youth.signedIn ? (
             <Button color="danger" className="min-w-[100px]" onClick={() => onSignOut(youth)}>
                 Sign Out
@@ -59,6 +35,9 @@ const YouthCard: React.FC<YouthCardProps> = ({ youth, onSignIn, onSignOut }) => 
                 Sign In
             </Button>
             )}
+            {editMode ? (
+              <Button> Edit </Button>
+            ) : null }
         </div>
       </CardBody>
     </Card>
