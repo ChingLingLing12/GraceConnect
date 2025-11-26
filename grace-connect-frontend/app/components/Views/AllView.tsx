@@ -6,7 +6,7 @@ import YouthCard from "../YouthCard";
 import {Cell, HouseHold, Youth } from '../../models'
 
 
-export default function Allview({filteredYouths, handleSignIn, handleSignOut, editMode}: any ){
+export default function Allview({filteredYouths, handleSignIn, handleSignOut, editMode, setSelected, removeYouth}: any ){
 
     return (
         <div>
@@ -20,6 +20,8 @@ export default function Allview({filteredYouths, handleSignIn, handleSignOut, ed
                     onSignIn={handleSignIn}
                     onSignOut={handleSignOut}
                     editMode={editMode}
+                    setSelected={setSelected}
+                    removeYouth={removeYouth}
                     />
 
                 ))
@@ -39,6 +41,8 @@ export default function Allview({filteredYouths, handleSignIn, handleSignOut, ed
                             onSignIn={handleSignIn}
                             onSignOut={handleSignOut}
                             editMode={editMode}
+                            setSelected={setSelected}
+                            removeYouth={removeYouth}
                             />
                         </div>
                     </div>

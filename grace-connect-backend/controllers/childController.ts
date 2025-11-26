@@ -96,6 +96,22 @@ export const childController = {
             console.error("Error updating child:", error);
             res.status(500).json({ success: false, error: 'Failed to update child' });
         }
+    },
+
+    deleteChild: async (req: any, res: any) => {
+    try {
+        const { _id } = req.params; // the ID of the child to delete
+        const deletedChild = await Child.findByIdAndDelete(_id);
+        if (!deletedChild) {
+        return res.status(404).json({ success: false, error: "Child not found" });
+        }
+        res.status(200).json({ success: true, message: "Child deleted", _id });
+    } catch (error) {
+        console.error("Error deleting child:", error);
+        res.status(500).json({ success: false, error: "Failed to delete child" });
     }
+    }
+
+
 }
 export default childController

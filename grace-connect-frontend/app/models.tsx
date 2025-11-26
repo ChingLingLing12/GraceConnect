@@ -18,7 +18,7 @@ export interface HouseHold {
 }
 
 export interface Youth {
-  _id?: string; // MongoDB ID from backend
+  _id: string; // MongoDB ID from backend
   firstName: string;
   lastName: string;
   signedIn: boolean;
@@ -42,5 +42,19 @@ export interface YouthCardProps {
   youth: Youth;
   onSignIn: (youth: Youth) => void;
   onSignOut: (youth: Youth) => void;
-  editMode: Boolean;
+  editMode: boolean;
+  setSelected: (Youth: Youth) => void;
+  removeYouth: (id: string) => void;
 }
+
+export const sampleYouth: Youth[] = [
+    {   _id: "222",
+        firstName: "Jin",
+        lastName: "Lee",
+        signedIn: false,
+        lastSignedIn: "2025-10-26T08:00:00",
+        lastSignedOut: "2025-10-26T12:00:00",
+        cell: Cell.Year7,
+        age: 82
+    },
+];

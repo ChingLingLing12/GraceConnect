@@ -63,5 +63,20 @@ export const houseHoldController = {
             res.status(500).json({ error: 'Internal server error' });
         }
     },
+
+    deleteHouseHold: async (req: any, res: any) => {
+    try {
+        const { _id } = req.params; // the ID of the houseHold to delete
+        const deleteHouseHold = await HouseHold.findByIdAndDelete(_id);
+        if (!deleteHouseHold) {
+        return res.status(404).json({ success: false, error: "houseHold not found" });
+        }
+        res.status(200).json({ success: true, message: "houseHold deleted", _id });
+    } catch (error) {
+        console.error("Error deleting houseHold:", error);
+        res.status(500).json({ success: false, error: "Failed to delete houseHold" });
+    }
+    }
+
 };
 export default houseHoldController;

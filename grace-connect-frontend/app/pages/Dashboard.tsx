@@ -2,23 +2,11 @@
 
 import { useState, useEffect, Children } from 'react';
 import { Input, Button, Card, CardBody, CardHeader, Select, SelectItem, Switch } from "@heroui/react";
-import {Cell, HouseHold, Youth } from '../models'
+import {Cell, HouseHold, Youth, sampleYouth } from '../models'
 import Allview from '../components/Views/AllView'
 import Cellview from '../components/Views/CellView'
 import HouseHoldView from '../components/Views/HouseHoldView'
 
-
-const sampleYouth: Youth[] = [
-  {
-    firstName: "Alice",
-    lastName: "Smith",
-    age: 12,
-    signedIn: false,
-    lastSignedIn: "2025-10-26T08:00:00",
-    lastSignedOut: "2025-10-26T12:00:00",
-    cell: Cell.Year1011
-  },
-];
 
 export interface newYouth {
   _id: string;
@@ -40,6 +28,8 @@ export default function Dashboard() {
   const [selectedHousehold, setSelectedHousehold] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
 
+  const [selected, setSelected] = useState<HouseHold | Youth | null>(null);
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000';
   const YOUTH_URL = `${API_URL}/api/youth`;
   const LOG_URL = `${API_URL}/api/log`;
@@ -52,9 +42,7 @@ export default function Dashboard() {
       { _id: String(Date.now()) + Math.random(), firstName: "", lastName: "", age: 0, signedIn: false },
     ]);
   };
-    const removeYouth = (index: number) => {
-    setNewYouths(prev => prev.filter((_, i) => i !== index));
-  };
+
   const [newYouths, setNewYouths] = useState<newYouth[]>([
     { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false },
   ]);
@@ -89,7 +77,51 @@ export default function Dashboard() {
     }
   };
 
-  const openCreateChildMenu = async (houseHoldId: string) => {
+  const removeYouth = async (youthId: string) => {
+    try {
+      const response = await fetch(`${YOUTH_URL}/${youthId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete youth. Status: ${response.status}`);
+      }
+
+      console.log("Youth deleted:", youthId);
+
+      // Update local state to remove the card immediately
+      setNewYouths(prev => prev.filter(y => y._id !== youthId));
+
+    } catch (error) {
+      console.error("Error deleting youth:", error);
+    }
+    fetchYouths()
+  };
+
+
+    const removeHouseHold = async (houseHoldId: string) => {
+    try {
+      const response = await fetch(`${HOUSEHOLD_URL}/${houseHoldId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete youth. Status: ${response.status}`);
+      }
+
+      console.log("Youth deleted:", houseHoldId);
+
+    } catch (error) {
+      console.error("Error deleting youth:", error);
+    }
+    fetchHouseholds()
+  };
+
+
+
+  const openEditCard = async (houseHoldId: string) => {
     if(houseHoldId == selectedHousehold){
       setSelectedHousehold(null)
     }
@@ -100,6 +132,38 @@ export default function Dashboard() {
 
   };
 
+
+  const handleEditEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selected && "guardianFirstName" in selected) {
+      const updates = {
+          guardianFirstName: selected.guardianFirstName,
+          guardianLastName: selected.guardianLastName,
+          email: selected.email,
+          phone: selected.phone,
+      };
+      await editHousehold(selected._id, updates);
+    }
+    else if (selected && "firstName" in selected) {
+      const updates = {
+        firstName: selected.firstName,
+        lastName: selected.lastName,
+        age: selected.age,
+        cell: selected.cell,
+      };
+      await editYouth(selected._id, updates);
+    }
+    setSelected(null)
+    await fetchHouseholds();
+    await fetchYouths();
+  }
+  const handleSelectedHouseHold = <K extends keyof HouseHold>(field: K, value: HouseHold[K]) => {
+        setSelected(prev => prev ? { ...prev, [field]: value } : prev);
+    };
+
+  const handleSelectedYouth = <K extends keyof Youth>(field: K, value: Youth[K]) => {
+      setSelected(prev => prev ? { ...prev, [field]: value } : prev);
+  };
 
 
 
@@ -340,6 +404,7 @@ const groupedByHouseHold = households.map((houseHold) => ({
           onClear={() => setSearchTerm("")}
         />
       {/* 👁 VIEWING MODE */}
+
         <div className="flex justify-center gap-2">
           <Button
             variant={viewMode === "default" ? "solid" : "flat"}
@@ -360,7 +425,6 @@ const groupedByHouseHold = households.map((houseHold) => ({
             Household View
           </Button>
         </div>
-
       {/* 3-part filter switch */}
         <div className="flex border border-gray-900 rounded overflow-hidden mb-4">
           {["default", "signedIn", "signedOut"].map(mode => (
@@ -405,6 +469,8 @@ const groupedByHouseHold = households.map((houseHold) => ({
             handleSignIn={handleSignIn}
             handleSignOut={handleSignOut}
             editMode = {editMode}
+            setSelected = {setSelected}
+            removeYouth={removeYouth}
           />
         ) : viewMode === "cell" ? (
           // 🟩 4-CELL GRID VIEW
@@ -413,6 +479,8 @@ const groupedByHouseHold = households.map((houseHold) => ({
             handleSignIn={handleSignIn}
             handleSignOut={handleSignOut}
             editMode = {editMode}
+            setSelected = {setSelected}
+            removeYouth={removeYouth}
           />
         ) : viewMode === "houseHold" ? (
           // 🏠 HOUSEHOLD VIEW
@@ -423,14 +491,87 @@ const groupedByHouseHold = households.map((houseHold) => ({
             selectedHousehold={selectedHousehold}
             newYouths={newYouths}
             updateYouth={updateYouth}
-            openCreateChildMenu={openCreateChildMenu}
+            openEditCard={openEditCard}
             handleSubmit={handleSubmit}
-            removeYouth={removeYouth}
             addYouth={addYouth}
             editMode = {editMode}
+            setSelected = {setSelected}
+            removeYouth={removeYouth}
+            removeHouseHold={removeHouseHold}
           />
         ) : null}
+
+        {
+          selected === null ? null
+            : "guardianFirstName" in selected &&
+            "guardianLastName" in selected &&
+            "email" in selected &&
+            "phone" in selected ? (
+            <div className="fixed right-4 top-100 -translate-y-1/2 z-50">
+              {/* Household editor card */}
+              <Card className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md flex flex-col max-h-[600px]">
+                <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3 flex-none">
+                  Editing household {selected.guardianLastName}
+                </CardHeader>
+                <CardBody className="px-4 py-4 overflow-y-auto flex-1 space-y-4">
+                  <form onSubmit={handleEditEntry}>
+                    <div className="space-y-4">
+                      <p> {selected._id} </p>
+                      <Input className="pb-3" label="First Name" variant="bordered" labelPlacement="outside" placeholder="Enter first name" value={selected.guardianFirstName} onChange={(e) => handleSelectedHouseHold("guardianFirstName", e.target.value)} />
+                      <Input className="pb-3" label="Last Name" variant="bordered" labelPlacement="outside" placeholder="Enter last name" value={selected.guardianLastName} onChange={(e) => handleSelectedHouseHold("guardianLastName", e.target.value)} />
+                      <Input className="pb-3" label="Email" variant="bordered" labelPlacement="outside" placeholder="Enter Email" value={selected.email} onChange={(e) => handleSelectedHouseHold("email", e.target.value)} />
+                      <Input className="pb-3" label="Phone" variant="bordered" labelPlacement="outside" placeholder="Enter Phone Number" value={selected.phone} onChange={(e) => handleSelectedHouseHold("phone", e.target.value)} />
+                      <Button type="submit" color="primary"> Edit </Button>
+                    </div>
+                  </form>
+                </CardBody>
+              </Card>
+            </div>
+          ) : "firstName" in selected &&
+            "lastName" in selected &&
+            "age" in selected &&
+            "cell" in selected ? (
+              <div className="fixed right-4 top-100 -translate-y-1/2 z-50">
+                <Card className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md flex flex-col max-h-[600px]">
+                  <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3 flex-none">
+                    Editing Child {selected.firstName}{selected.lastName}
+                  </CardHeader>
+                  <CardBody className="px-4 py-4 overflow-y-auto flex-1 space-y-4">
+                    <form onSubmit={handleEditEntry}>
+                      <div className="space-y-4">
+                        <p> {selected._id} </p>
+                        <Input className="pb-3" label="First Name" variant="bordered" labelPlacement="outside" placeholder="Enter first name" value={selected.firstName} onChange={(e) => handleSelectedYouth("firstName", e.target.value)} />
+                        <Input className="pb-3" label="Last Name" variant="bordered" labelPlacement="outside" placeholder="Enter last name" value={selected.lastName} onChange={(e) => handleSelectedYouth("lastName", e.target.value)} />
+                        <Input className="pb-3" label="Email" variant="bordered" labelPlacement="outside" placeholder="Enter Email" value={selected.age.toString()} onChange={(e) => handleSelectedYouth("age", Number(e.target.value))} />
+
+                        <Select
+                          className="pb-3"
+                          label="Cell Group"
+                          variant="bordered"
+                          labelPlacement="outside"
+                          placeholder="Select a cell group"
+                          selectedKeys={selected.cell ? new Set([selected.cell]) : new Set()}
+                          onSelectionChange={(keys) => {
+                            const value = Array.from(keys)[0] as Cell | undefined;
+                            handleSelectedYouth("cell", value);
+                          }}
+                        >
+                          {Object.values(Cell).map((val) => (
+                            <SelectItem key={val}>{val}</SelectItem>
+                          ))}
+                        </Select>
+
+                        <Button type="submit" color="primary"> Edit </Button>
+                      </div>
+                    </form>
+                  </CardBody>
+                </Card>
+              </div>
+            ) : null
+          }
+        
       </div>
+      
     </main>
   );
 }

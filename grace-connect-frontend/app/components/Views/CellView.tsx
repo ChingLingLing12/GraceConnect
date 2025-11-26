@@ -6,7 +6,7 @@ import YouthCard from "../YouthCard";
 import {Cell, HouseHold, Youth } from '../../models'
 
 
-export default function Cellview({editMode, groupedByCell, handleSignIn, handleSignOut}: any){
+export default function Cellview({editMode, groupedByCell, handleSignIn, handleSignOut, setSelected, removeYouth}: any){
 
 
 return (
@@ -24,7 +24,7 @@ return (
                 {youths.length > 0 ? (
                     youths.map((y:any, i:any) => (
                     <div key={i} className="rounded-xl overflow-hidden">
-                        <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} editMode={editMode} />
+                        <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} editMode={editMode} setSelected={setSelected} removeYouth={removeYouth}/>
                     </div>
                     ))
                 ) : (

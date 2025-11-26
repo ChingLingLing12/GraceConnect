@@ -6,7 +6,7 @@ import YouthCard from "../YouthCard";
 import {Cell, HouseHold, Youth } from '../../models'
 
 
-export default function Householdview({editHousehold, editMode, groupedByHouseHold, handleSignIn, handleSignOut, selectedHousehold, newYouths, updateYouth, openCreateChildMenu, handleSubmit, removeYouth, addYouth}: any){
+export default function Householdview({groupedByHouseHold, handleSignIn, handleSignOut, selectedHousehold, newYouths, updateYouth, handleSubmit, removeYouth, addYouth, editMode, setSelected, removeHouseHold}: any){
 
 
     return (
@@ -21,8 +21,19 @@ export default function Householdview({editHousehold, editMode, groupedByHouseHo
                     >
                         {/* Header stays fixed */}
                         <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3 flex-none">
-                        {houseHold.guardianLastName} Family ({houseHold.guardianFirstName})
-                        <Button onPress={() => openCreateChildMenu(houseHold)}> yeetus </Button>
+                        <div className="flex justify-between items-center w-full">
+                            <Button
+                                color="danger"
+                                className="absolute left-0 top-0 bottom-0 h-[64px] w-[50px] p-0"
+                                onPress={() => removeHouseHold(houseHold._id)}>delte 
+                            </Button>
+                            <div className='pl-20'>
+                                {houseHold.guardianLastName} Family ({houseHold.guardianFirstName})
+                            </div>
+                            <Button className="ml-4" onPress={() => setSelected(houseHold)}>
+                            Edit
+                            </Button>
+                        </div>
                         </CardHeader>
 
                         {/* Scrollable content */}
@@ -31,7 +42,7 @@ export default function Householdview({editHousehold, editMode, groupedByHouseHo
                             {youths.length > 0 ? (
                             youths.map((y:any, i:any) => (
                                 <div key={i} className="rounded-xl overflow-hidden">
-                                <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} editMode={editMode}/>
+                                <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} editMode={editMode} setSelected={setSelected} removeYouth={removeYouth}/>
                                 </div>
                             ))
                             ) : (
@@ -40,7 +51,9 @@ export default function Householdview({editHousehold, editMode, groupedByHouseHo
                             </p>
                             )}
                         </div>
+                        
 
+                        {/*add child */}
                         {selectedHousehold === houseHold._id && (
                             <form onSubmit={(e) => handleSubmit(houseHold._id, e)} className="flex flex-wrap gap-4 justify-center p-4">
                             {newYouths.map((youth: any, i: any) => (
@@ -48,9 +61,12 @@ export default function Householdview({editHousehold, editMode, groupedByHouseHo
                                 <div className="flex justify-between items-center">
                                     <h3 className="text-sm font-semibold text-white">Youth {i + 1}</h3>
                                     {newYouths.length > 1 && (
-                                    <Button size="sm" variant="flat" color="danger" onPress={() => removeYouth(i)}>
-                                        Remove
-                                    </Button>
+                                    <div>
+                                        <Button size="sm" variant="flat" color="danger" onPress={() => removeYouth(i)}>
+                                            Remove
+                                        </Button>
+                                    </div>
+                                    
                                     )}
                                 </div>
                                 <Input
@@ -114,7 +130,7 @@ export default function Householdview({editHousehold, editMode, groupedByHouseHo
 
                         {/* Footer / add child button stays fixed */}
                         <div className="p-4 flex-none">
-                        <Button onPress={() => openCreateChildMenu(houseHold._id)}>
+                        <Button>
                             Add Child
                         </Button>
                         </div>
@@ -147,7 +163,7 @@ export default function Householdview({editHousehold, editMode, groupedByHouseHo
                                 youths.map((y:any, i:any) => (
                                     <div key={i} className="rounded-xl overflow-hidden flex flex-row item-start gap-1">
                                         <div className='flex-1'>
-                                            <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} editMode={editMode}/>
+                                            <YouthCard youth={y} onSignIn={handleSignIn} onSignOut={handleSignOut} editMode={editMode} setSelected={setSelected} removeYouth={removeYouth}/>
                                         </div>
                                     </div>
                                 ))

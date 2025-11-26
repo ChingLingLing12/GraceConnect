@@ -32,11 +32,12 @@ app.post('/api/log', logController.createLog);
 app.get('/api/youth', childController.getChildren);
 app.post('/api/youth', childController.createChild);
 app.put('/api/youth/:_id', childController.editChild);
+app.delete('/api/youth/:_id', childController.deleteChild);
 
 app.get('/api/household', houseHoldController.getHouseHolds);
 app.post('/api/household', houseHoldController.createHouseHold);
 app.put('/api/household/:_id', houseHoldController.editHouseHold);
-
+app.delete('/api/household/:_id', houseHoldController.deleteHouseHold);
 app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);
 });

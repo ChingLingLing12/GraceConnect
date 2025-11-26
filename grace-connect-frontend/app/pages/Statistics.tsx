@@ -2,21 +2,11 @@ import { Input, Card, CardBody, Button, Accordion, AccordionItem } from "@heroui
 import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell} from "@heroui/react";
 
 import { useState, useEffect} from "react";
-import {Cell, HouseHold, Youth } from '../models'
+import {sampleYouth } from '../models'
 
 
 
-const sampleYouth: Youth[] = [
-    {
-        firstName: "Jin",
-        lastName: "Lee",
-        signedIn: false,
-        lastSignedIn: "2025-10-26T08:00:00",
-        lastSignedOut: "2025-10-26T12:00:00",
-        cell: Cell.Year7,
-        age: 82
-    },
-];
+
 
 export default function Statistics() {
 
@@ -107,31 +97,6 @@ export default function Statistics() {
       {/* 🧾 DISPLAY */}
             {viewMode === "default" ? (
             <div className="grid gap-2">
-
-                    {// <Card className="bg-gray-800 text-white">
-                    //     <CardBody className="flex flex-row justify-between items-center p-4">
-                    //         <Accordion key={i} aria-label={`Accordion ${i}`}>
-                    //         <AccordionItem
-                    //             key={`item-${i}`}
-                    //             aria-label={`Accordion Item ${i}`}
-                    //             title={`${y.firstName} ${y.lastName}`}
-                    //         >
-                    //             {y.records?.map((r, idx) => (
-                    //                 <div key={r._id} className="border-b py-2">
-                    //                     <Card className="bg-gray-800 text-white">
-                    //                         <CardBody className="flex flex-row justify-between items-center p-4">
-                    //                             <p><strong>Message:</strong> {r.message}</p>
-                    //                             <p><strong>Timestamp:</strong> {r.timestamp}</p>
-                    //                         </CardBody>
-                    //                     </Card>
-                    //                 </div>
-                    //             ))}
-                    //         </AccordionItem>
-
-                    //         </Accordion>
-                    //     </CardBody>
-                    // </Card>
-                    }
                     <Table aria-label="records table" className="w-full min-w-[1000px]">
                     <TableHeader>
                         <TableColumn>First Name</TableColumn>
@@ -143,24 +108,27 @@ export default function Statistics() {
 
                     <TableBody>
                         {filteredYouths.length > 0 ? (
-                        filteredYouths.flatMap((y, i) =>
-                            y.records?.map(({ r, idx }:any) => (
-                            <TableRow key={`${i}-${idx}`} className={r.message === "signIn" ? "bg-yellow-500 text-black" : ""}>
+                            filteredYouths.flatMap((y, i) =>
+                            y.records?.slice().reverse().map((r, idx) => (
+                                <TableRow
+                                key={`${i}-${idx}`}
+                                className={r.message === "signIn" ? "bg-blue-500 text-black" : ""}
+                                >
                                 <TableCell>{y.firstName}</TableCell>
                                 <TableCell>{y.lastName}</TableCell>
                                 <TableCell>{y.cell}</TableCell>
                                 <TableCell>{r.message}</TableCell>
                                 <TableCell>{r.timestamp}</TableCell>
-                            </TableRow>
+                                </TableRow>
                             )) ?? []
-                        )
+                            )
                         ) : (
-                        <TableRow>
+                            <TableRow>
                             <TableCell colSpan={5}>No youths found</TableCell>
-                        </TableRow>
+                            </TableRow>
                         )}
                     </TableBody>
-                    </Table>
+                </Table>
             </div>
             ): null}
         </main>
