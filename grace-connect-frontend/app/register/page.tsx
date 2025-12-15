@@ -1,11 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { Input, Button, Select, SelectItem, Switch } from "@heroui/react";
-import { create } from "domain";
 import {Cell, HouseHold, Youth } from '../models'
 
-
-export default function RegisterForm() {
+export default function RegisterPage() {
   const [houseHold, setHouseHold] = useState<HouseHold>(
     { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] } 
   );
