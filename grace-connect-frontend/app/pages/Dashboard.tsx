@@ -392,7 +392,7 @@ const groupedByHouseHold = households.map((houseHold) => ({
           Grace Connect Check-In System
         </h3>
         <h3 className="mb-8 text-center text-gray-600">
-          {currentDateTime.dateString} | {currentDateTime.timeString}
+          {currentDateTime.dateString}
         </h3>
       {/* Search Bar */}
         <Input
