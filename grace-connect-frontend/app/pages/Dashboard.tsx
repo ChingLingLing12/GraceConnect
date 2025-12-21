@@ -533,9 +533,19 @@ const groupedByHouseHold = households.map((houseHold) => ({
             "cell" in selected ? (
               <div className="fixed right-4 top-100 -translate-y-1/2 z-50">
                 <Card className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-md flex flex-col max-h-[600px]">
-                  <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3 flex-none">
-                    Editing Child {selected.firstName}{selected.lastName}
+                  <CardHeader className="text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3 flex items-center justify-between">
+                    <span>
+                      Editing Child {selected.firstName} {selected.lastName}
+                    </span>
+
+                    <Button
+                      onClick={() => setSelected(null)}
+                      className="text-sm p-0 m-0 w-6 h-6 min-w-0"
+                    >
+                      X
+                    </Button>
                   </CardHeader>
+
                   <CardBody className="px-4 py-4 overflow-y-auto flex-1 space-y-4">
                     <form onSubmit={handleEditEntry}>
                       <div className="space-y-4">
