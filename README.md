@@ -4,3 +4,5 @@ MAC: rm -rf node_modules
     npx ts-node app.ts
     
 frontend: npm run dev
+
+npm install react-chartjs-2 chart.js
