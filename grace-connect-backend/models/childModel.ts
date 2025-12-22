@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const cellValues = ['Year 12 Cell', 'Year 8/9 Cell', 'Year 10/11 Cell', 'Year 7 Cell', 'Sunday School'];
+const cellValues = ['Year 12 Cell', 'Year 8/9 Cell', 'Year 10/11 Cell', 'Year 7 Cell', 'Sunday School', 'Sunday School Year 1'];
 
 const childSchema = new mongoose.Schema({
     firstName: String,
@@ -11,6 +11,7 @@ const childSchema = new mongoose.Schema({
     signedIn: { type: Boolean, default: false },
     lastSignedIn: { type: String},
     lastSignedOut: { type: String},
+    oneTime: Boolean
 });
 
 

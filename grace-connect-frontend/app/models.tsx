@@ -6,7 +6,8 @@ export enum Cell {
   Year89 = "Year 8/9 Cell",
   Year1011 = "Year 10/11 Cell",
   Year7 = "Year 7 Cell",
-  SundaySchool="Sunday School"
+  SundaySchool="Sunday School",
+  SundaySchoolyear1 = "Sunday School Year 1",
 }
 export interface HouseHold {
   _id: string;
@@ -28,6 +29,7 @@ export interface Youth {
   lastSignedOut?: string;
   family?: string;
   records?: RecordEntry[];
+  oneTime?: boolean;
 }
 
 export interface RecordEntry {

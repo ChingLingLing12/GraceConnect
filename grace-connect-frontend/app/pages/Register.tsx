@@ -6,11 +6,14 @@ import {Cell, HouseHold, Youth } from '../models'
 
 
 export default function RegisterForm() {
+
+  const [isTemporary, setIsTemporary] = useState(true);
+
   const [houseHold, setHouseHold] = useState<HouseHold>(
-    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] } 
+    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] }  //THERE IS EROR BUT DONT TOUCh
   );
   const [youths, setYouths] = useState<Youth[]>([
-    { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false },
+    { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false, oneTime: isTemporary },
   ]);
 
   const updateHouseHold = <K extends keyof HouseHold>(field: K, value: HouseHold[K]) => {
@@ -30,7 +33,7 @@ export default function RegisterForm() {
   const addYouth = () => {
     setYouths(prev => [
       ...prev,
-      { _id: String(Date.now()) + Math.random(), firstName: "", lastName: "", age: 0, signedIn: false },
+      { _id: String(Date.now()) + Math.random(), firstName: "", lastName: "", age: 0, signedIn: false, oneTime: isTemporary },
     ]);
   };
 
@@ -63,12 +66,16 @@ export default function RegisterForm() {
 
   const createYouth = async (youth: Youth): Promise<string> => {
     try {
+      const payload = {
+        ...youth,
+        oneTime: isTemporary, // 🔥 always correct
+      };
       const response = await fetch(YOUTH_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(youth),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) {
         throw new Error("Failed to create youth");
@@ -90,6 +97,7 @@ export default function RegisterForm() {
       const childIDs: string[] = [];
       for (const youth of youths) {
         const childId = await createYouth(youth);
+        console.log("Created youth with ID:", childId);
         childIDs.push(childId);
       }
       await createHouseHold(houseHold, childIDs);
@@ -143,6 +151,9 @@ export default function RegisterForm() {
             value={houseHold.phone}
             onChange={e => updateHouseHold("phone", e.target.value)}
           />
+          <Switch isSelected={isTemporary} onValueChange={setIsTemporary}>
+            Temporary Registration {isTemporary ? "(Yes)" : "(No)"}
+          </Switch>
         </div>
 
         {/* Youth cards below */}
@@ -203,8 +214,13 @@ export default function RegisterForm() {
               </Select>
 
               <Switch
-                isSelected={youth.signedIn}
-                onValueChange={v => updateYouth(i, "signedIn", v)}
+                isSelected={isTemporary ? true : youth.signedIn}
+                isDisabled={isTemporary}
+                onValueChange={v => {
+                  if (!isTemporary) {
+                    updateYouth(i, "signedIn", v);
+                  }
+                }}
               >
                 Signed In
               </Switch>

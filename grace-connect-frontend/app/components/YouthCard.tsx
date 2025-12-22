@@ -21,6 +21,7 @@ const YouthCard: React.FC<YouthCardProps> = ({ youth, onSignIn, onSignOut, editM
       {editMode ? (
         <Card className="bg-gray-800 text-white">
           <CardBody className="flex flex-row justify-between items-center p-4 pl-0">
+            {youth.oneTime ? (<p className="text-yellow-400">Temporary Registration</p>) : null}
           <Button
             color="danger"
             className="absolute left-0 top-0 bottom-0 h-full w-[50px] p-0" 
@@ -55,6 +56,7 @@ const YouthCard: React.FC<YouthCardProps> = ({ youth, onSignIn, onSignOut, editM
       ):(
         <Card className="bg-gray-800 text-white">
           <CardBody className="flex flex-row justify-between items-center p-4">
+            {youth.oneTime ? (<p className="text-yellow-400 p-0">🟨</p>) : null}
             <div className="flex flex-col mr-4">
               <p className="font-semibold">{youth.firstName} {youth.lastName}</p>
               {youth.signedIn ? (
