@@ -105,7 +105,7 @@ export default function RegisterPage() {
         <div className="flex flex-col items-center space-y-4">
           <Input
             isRequired
-            label="First Name"
+            label="Guardian First Name"
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your first name"
@@ -114,7 +114,7 @@ export default function RegisterPage() {
           />
           <Input
             isRequired
-            label="Last Name"
+            label="Guardian Last Name"
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your last name"
@@ -124,7 +124,7 @@ export default function RegisterPage() {
           <Input
             isRequired
             type="email"
-            label="Email"
+            label="Guardian Email"
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your email"
@@ -134,7 +134,7 @@ export default function RegisterPage() {
           <Input
             isRequired
             type="tel"
-            label="Phone Number"
+            label="Guardian Phone Number"
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your phone number"

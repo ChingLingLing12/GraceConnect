@@ -7,7 +7,7 @@ import {Cell, HouseHold, Youth } from '../models'
 
 export default function RegisterForm() {
 
-  const [isTemporary, setIsTemporary] = useState(true);
+  const [isTemporary, setIsTemporary] = useState(false);
 
   const [houseHold, setHouseHold] = useState<HouseHold>(
     { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] }  //THERE IS EROR BUT DONT TOUCh
@@ -90,23 +90,27 @@ export default function RegisterForm() {
     }
   };
   
-
-  const handleSubmit = async (e: React.FormEvent) => {    
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const childIDs: string[] = [];
       for (const youth of youths) {
-        const childId = await createYouth(youth);
-        console.log("Created youth with ID:", childId);
+        const childToSend = {
+          ...youth,
+          oneTime: isTemporary,
+          signedIn: isTemporary ? true : youth.signedIn, // <--- FORCE true
+        };
+        const childId = await createYouth(childToSend);
         childIDs.push(childId);
       }
       await createHouseHold(houseHold, childIDs);
       alert("Registration completed successfully!");
     } catch (error) {
-      console.error("Error during registration:", error);
-      alert("Registration failed. Please try again.");
+      console.error(error);
+      alert("Registration failed");
     }
   };
+
 
   return (
     <main className="min-h-screen bg-gray-900 flex flex-col items-center p-12">
@@ -115,7 +119,7 @@ export default function RegisterForm() {
         <div className="flex flex-col items-center space-y-4">
           <Input
             isRequired
-            label="First Name"
+            label="Guardian First Name"
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your first name"
@@ -124,7 +128,7 @@ export default function RegisterForm() {
           />
           <Input
             isRequired
-            label="Last Name"
+            label="Guardian Last Name"
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your last name"
@@ -134,7 +138,7 @@ export default function RegisterForm() {
           <Input
             isRequired
             type="email"
-            label="Email"
+            label="Guardian Email"
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your email"
@@ -144,7 +148,7 @@ export default function RegisterForm() {
           <Input
             isRequired
             type="tel"
-            label="Phone Number"
+            label="Guardian Phone Number"
             variant="bordered"
             labelPlacement="outside"
             placeholder="Enter your phone number"
