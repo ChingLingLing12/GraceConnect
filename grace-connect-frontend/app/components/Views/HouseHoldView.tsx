@@ -43,7 +43,7 @@ export default function Householdview({
             >
                 {/* HEADER */}
                 <CardHeader
-                className="relative text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3 flex-none cursor-pointer"
+                className="relative text-lg font-semibold text-white border-b border-zinc-700 px-0 py-3 flex-none cursor-pointer"
                 onClick={() =>
                     setShowDetails((prev) =>
                     prev === houseHold._id ? null : houseHold._id
@@ -86,10 +86,7 @@ export default function Householdview({
 
                 {/* DETAILS */}
                 {showDetails === houseHold._id && (
-                <div className="px-4 py-3 text-sm text-gray-200 border-b border-zinc-700 bg-zinc-800/40">
-                    <p>
-                    <strong>Address:</strong> {houseHold.address}
-                    </p>
+                <div className="px-23 py-3 text-sm text-gray-200 border-b border-zinc-700 bg-zinc-800/40">
                     <p>
                     <strong>Phone:</strong> {houseHold.phone}
                     </p>

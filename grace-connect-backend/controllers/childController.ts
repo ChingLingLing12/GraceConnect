@@ -11,11 +11,11 @@ export const childController = {
         .toISOString()
         .slice(0, 19);
         try {
-            const { firstName, lastName, age, cell, signedIn, oneTime } = req.body;
+            const { firstName, lastName, age, cell, signedIn, oneTime, records } = req.body;
             if (!firstName || !lastName || !cell) {
                 return res.status(400).json({ success: false, error: 'Missing required fields' });
             }
-            const newChild = new Child({ firstName, lastName, age, cell, signedIn: signedIn, lastSignedIn: formattedTime, lastSignedOut: formattedTime, oneTime: oneTime });
+            const newChild = new Child({ firstName, lastName, age, cell, signedIn: signedIn, lastSignedIn: formattedTime, lastSignedOut: formattedTime, oneTime: oneTime, records: records || [] });
             console.log("Creating child:", newChild);
             await newChild.save();
 

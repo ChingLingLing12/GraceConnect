@@ -243,9 +243,16 @@ export default function Statistics() {
   /* ===========================
      TABLE DATA
      =========================== */
-  const allRecords = filteredYouths.flatMap((youth) =>
-    youth.records?.slice().reverse().map((r) => ({ youth, record: r })) ?? []
-  );
+  const allRecords = filteredYouths
+    .flatMap((youth) =>
+      youth.records?.map((r) => ({ youth, record: r })) ?? []
+    )
+    .sort((a, b) => {
+      const ta = parseTimestamp(a.record.timestamp).getTime();
+      const tb = parseTimestamp(b.record.timestamp).getTime();
+      return tb - ta; // newest first
+  });
+
 
   const paginatedRecords = allRecords.slice(
     tablePage * PAGE_SIZE,

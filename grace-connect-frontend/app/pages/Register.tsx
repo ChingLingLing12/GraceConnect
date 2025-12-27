@@ -7,6 +7,7 @@ import {Cell, HouseHold, Youth } from '../models'
 
 export default function RegisterForm() {
 
+  
   const [isTemporary, setIsTemporary] = useState(false);
 
   const [houseHold, setHouseHold] = useState<HouseHold>(
@@ -45,6 +46,7 @@ export default function RegisterForm() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000';
   const YOUTH_URL = `${API_URL}/api/youth`;
   const HOUSEHOLD_URL = `${API_URL}/api/household`;
+  const LOG_URL = `${API_URL}/api/log`;
 
   const createHouseHold = async (houseHold: HouseHold, childIDs: string[]) => {
     try {
@@ -64,12 +66,41 @@ export default function RegisterForm() {
     }
   };
 
+    const createLog = async (logEntry: { message: 'signIn' | 'signOut'; timestamp: string; }) => {
+    try {
+      const res = await fetch(LOG_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(logEntry),
+      });
+
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      console.log('Log created:', data);
+      return data.log._id;
+    } catch (error) {
+      console.error('Error creating log:', error);
+    }
+  };
   const createYouth = async (youth: Youth): Promise<string> => {
     try {
-      const payload = {
-        ...youth,
-        oneTime: isTemporary, // 🔥 always correct
-      };
+      let payload;
+      if(youth.signedIn){
+        console.log("Creating youth with sign-in log");
+        payload = {
+          ...youth,
+          oneTime: isTemporary, // 🔥 always correct
+          records: [await createLog({message: 'signIn', timestamp: new Date().toISOString()})]
+        };
+      } 
+      else {
+        payload = {
+          ...youth,
+          oneTime: isTemporary, // 🔥 always correct
+        };
+      }
       const response = await fetch(YOUTH_URL, {
         method: "POST",
         headers: {
@@ -110,6 +141,9 @@ export default function RegisterForm() {
       alert("Registration failed");
     }
   };
+
+
+
 
 
   return (

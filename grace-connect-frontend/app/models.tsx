@@ -2,12 +2,16 @@
 
 
 export enum Cell {
-  Year12 = "Year 12 Cell",
+  Year7 = "Year 7 Cell",
   Year89 = "Year 8/9 Cell",
   Year1011 = "Year 10/11 Cell",
-  Year7 = "Year 7 Cell",
-  SundaySchool="Sunday School",
-  SundaySchoolyear1 = "Sunday School Year 1",
+  Year12 = "Year 12 Cell",
+  LittleLight = "Little Light [Kindy to PP]",
+  LittleCandle = "Little Candle [Y1-Y2]",
+  Lighthouse = "Lighthouse [Y3-Y4]",
+  Flame = "Flame [Y5]",
+  TorchBearer = "Torch Bearer [Y6 above]",
+
 }
 export interface HouseHold {
   _id: string;
