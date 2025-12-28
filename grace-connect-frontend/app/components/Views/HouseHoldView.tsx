@@ -43,7 +43,7 @@ export default function Householdview({
             >
                 {/* HEADER */}
                 <CardHeader
-                className="relative text-lg font-semibold text-white border-b border-zinc-700 px-0 py-3 flex-none cursor-pointer"
+                className="relative text-lg font-semibold text-white border-b border-zinc-700 px-4 py-3 flex-none cursor-pointer"
                 onClick={() =>
                     setShowDetails((prev) =>
                     prev === houseHold._id ? null : houseHold._id
