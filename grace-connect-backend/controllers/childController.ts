@@ -11,11 +11,11 @@ export const childController = {
         .toISOString()
         .slice(0, 19);
         try {
-            const { firstName, lastName, age, cell, signedIn } = req.body;
+            const { firstName, lastName, age, cell, signedIn, oneTime, records } = req.body;
             if (!firstName || !lastName || !cell) {
                 return res.status(400).json({ success: false, error: 'Missing required fields' });
             }
-            const newChild = new Child({ firstName, lastName, age, cell, signedIn: signedIn, lastSignedIn: formattedTime, lastSignedOut: formattedTime });
+            const newChild = new Child({ firstName, lastName, age, cell, signedIn: signedIn, lastSignedIn: formattedTime, lastSignedOut: formattedTime, oneTime: oneTime, records: records || [] });
             console.log("Creating child:", newChild);
             await newChild.save();
 
@@ -53,7 +53,7 @@ export const childController = {
 
     editChild: async (req: any, res: any) => {
         try {
-            const { id } = req.params;
+            const { _id } = req.params;
             const updates = req.body;
             
             // Handle timestamp updates for sign-in/sign-out
@@ -71,13 +71,13 @@ export const childController = {
             }
             
             if (updates.records) {
-                const selectedChild = await Child.findById(id);
+                const selectedChild = await Child.findById(_id);
                 if (selectedChild) {
                     updates.records = [...(selectedChild.records || []), ...(Array.isArray(updates.records) ? updates.records : [updates.records])];
                 }
             }
             
-            const updatedChild = await Child.findByIdAndUpdate(id, updates, { new: true }).populate('records');
+            const updatedChild = await Child.findByIdAndUpdate(_id, updates, { new: true }).populate('records');
             if (!updatedChild) {
                 return res.status(404).json({ success: false, error: 'Child not found' });
             }
@@ -96,6 +96,22 @@ export const childController = {
             console.error("Error updating child:", error);
             res.status(500).json({ success: false, error: 'Failed to update child' });
         }
+    },
+
+    deleteChild: async (req: any, res: any) => {
+    try {
+        const { _id } = req.params; // the ID of the child to delete
+        const deletedChild = await Child.findByIdAndDelete(_id);
+        if (!deletedChild) {
+        return res.status(404).json({ success: false, error: "Child not found" });
+        }
+        res.status(200).json({ success: true, message: "Child deleted", _id });
+    } catch (error) {
+        console.error("Error deleting child:", error);
+        res.status(500).json({ success: false, error: "Failed to delete child" });
     }
+    }
+
+
 }
 export default childController

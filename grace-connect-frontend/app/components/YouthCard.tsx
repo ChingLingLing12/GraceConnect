@@ -1,54 +1,83 @@
-// components/YouthCard.tsx
-import { Card, CardBody, Button } from "@heroui/react"
+import { Card, CardBody, Button } from "@heroui/react";
 import React from "react";
 import { format } from "date-fns";
+import { YouthCardProps } from "../models";
 
-export interface Youth {
-  _id?: string; // MongoDB ID from backend
-  firstName: string;
-  lastName: string;
-  signedIn: boolean;
-  cell?: string;
-  lastSignedIn?: string;
-  lastSignedOut?: string;
-  family?: string;
-  records?: string[];
-}
+const YouthCard: React.FC<YouthCardProps> = ({
+  youth,
+  onSignIn,
+  onSignOut,
+  editMode,
+  setSelected,
+  removeYouth,
+}) => {
 
-interface YouthCardProps {
-  youth: Youth;
-  onSignIn: (youth: Youth) => void;
-  onSignOut: (youth: Youth) => void;
-}
-
-const YouthCard: React.FC<YouthCardProps> = ({ youth, onSignIn, onSignOut }) => {
-  const latestTime = youth.lastSignedIn && youth.lastSignedOut
-    ? new Date(youth.lastSignedIn) > new Date(youth.lastSignedOut)
-      ? youth.lastSignedIn
-      : youth.lastSignedOut
-    : youth.lastSignedIn || youth.lastSignedOut || "Never";
+  const latestTime =
+    youth.lastSignedIn && youth.lastSignedOut
+      ? new Date(youth.lastSignedIn) > new Date(youth.lastSignedOut)
+        ? youth.lastSignedIn
+        : youth.lastSignedOut
+      : youth.lastSignedIn || youth.lastSignedOut;
 
   return (
     <Card className="bg-gray-800 text-white">
       <CardBody className="flex flex-row justify-between items-center p-4">
-        <div className="flex flex-col mr-4">
-          <p className="font-semibold">{youth.firstName} {youth.lastName}</p>
-          {youth.signedIn ? (
-            <p className="text-green-400 text-sm">Last Signed In: {format(new Date(latestTime), "EEE dd/MM HH:mm")}</p>
-          ) : (
-            <p className="text-red-400 text-sm">Last Signed Out: {format(new Date(latestTime), "EEE dd/MM HH:mm")}</p>
-          )}
-        </div>
-        <div className="mt-2 md:mt-0">
-            {youth.signedIn ? (
-            <Button color="danger" className="min-w-[100px]" onClick={() => onSignOut(youth)}>
-                Sign Out
-            </Button>
+
+        {/* LEFT SIDE */}
+        <div className="flex flex-row items-center">
+          {youth.oneTime && <p className="text-yellow-400 pr-4">🟨</p>}
+
+          <div className="flex flex-col mr-4">
+            <p className="font-semibold">
+              {youth.firstName} {youth.lastName}
+            </p>
+
+            {latestTime ? (
+              <p
+                className={`text-sm ${
+                  youth.signedIn ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {youth.signedIn ? "Last Signed In:" : "Last Signed Out:"}{" "}
+                {format(new Date(latestTime), "EEE dd/MM HH:mm")}
+              </p>
             ) : (
-            <Button color="success" className="min-w-[100px]" onClick={() => onSignIn(youth)}>
-                Sign In
-            </Button>
+              <p className="text-gray-400 text-sm">Never</p>
             )}
+          </div>
+        </div>
+
+        {/* RIGHT SIDE */}
+        <div className="flex flex-row items-center gap-2">
+          {youth.signedIn ? (
+            <Button
+              color="danger"
+              className="min-w-[100px]"
+              onClick={() => onSignOut(youth)}
+            >
+              Sign Out
+            </Button>
+          ) : (
+            <Button
+              color="success"
+              className="min-w-[100px]"
+              onClick={() => onSignIn(youth)}
+            >
+              Sign In
+            </Button>
+          )}
+
+          {editMode && (
+            <>
+              <Button onPress={() => setSelected(youth)}>Edit</Button>
+              <Button
+                color="danger"
+                onPress={() => removeYouth(youth._id)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
         </div>
       </CardBody>
     </Card>

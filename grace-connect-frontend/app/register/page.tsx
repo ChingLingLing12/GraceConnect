@@ -1,20 +1,14 @@
 "use client";
 import React, { useState } from "react";
 import { Input, Button, Select, SelectItem, Switch } from "@heroui/react";
-import { create } from "domain";
 import {Cell, HouseHold, Youth } from '../models'
 
-
-export default function RegisterForm() {
-
-  
-  const [isTemporary, setIsTemporary] = useState(false);
-
+export default function RegisterPage() {
   const [houseHold, setHouseHold] = useState<HouseHold>(
-    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] }  //THERE IS EROR BUT DONT TOUCh
+    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] } 
   );
   const [youths, setYouths] = useState<Youth[]>([
-    { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false, oneTime: isTemporary },
+    { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false },
   ]);
 
   const updateHouseHold = <K extends keyof HouseHold>(field: K, value: HouseHold[K]) => {
@@ -34,7 +28,7 @@ export default function RegisterForm() {
   const addYouth = () => {
     setYouths(prev => [
       ...prev,
-      { _id: String(Date.now()) + Math.random(), firstName: "", lastName: "", age: 0, signedIn: false, oneTime: isTemporary },
+      { _id: String(Date.now()) + Math.random(), firstName: "", lastName: "", age: 0, signedIn: false },
     ]);
   };
 
@@ -46,7 +40,6 @@ export default function RegisterForm() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000';
   const YOUTH_URL = `${API_URL}/api/youth`;
   const HOUSEHOLD_URL = `${API_URL}/api/household`;
-  const LOG_URL = `${API_URL}/api/log`;
 
   const createHouseHold = async (houseHold: HouseHold, childIDs: string[]) => {
     try {
@@ -66,47 +59,14 @@ export default function RegisterForm() {
     }
   };
 
-    const createLog = async (logEntry: { message: 'signIn' | 'signOut'; timestamp: string; }) => {
-    try {
-      const res = await fetch(LOG_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(logEntry),
-      });
-
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data = await res.json();
-      console.log('Log created:', data);
-      return data.log._id;
-    } catch (error) {
-      console.error('Error creating log:', error);
-    }
-  };
   const createYouth = async (youth: Youth): Promise<string> => {
     try {
-      let payload;
-      if(youth.signedIn){
-        console.log("Creating youth with sign-in log");
-        payload = {
-          ...youth,
-          oneTime: isTemporary, // 🔥 always correct
-          records: [await createLog({message: 'signIn', timestamp: new Date().toISOString()})]
-        };
-      } 
-      else {
-        payload = {
-          ...youth,
-          oneTime: isTemporary, // 🔥 always correct
-        };
-      }
       const response = await fetch(YOUTH_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(youth),
       });
       if (!response.ok) {
         throw new Error("Failed to create youth");
@@ -121,30 +81,22 @@ export default function RegisterForm() {
     }
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {    
     e.preventDefault();
     try {
       const childIDs: string[] = [];
       for (const youth of youths) {
-        const childToSend = {
-          ...youth,
-          oneTime: isTemporary,
-          signedIn: isTemporary ? true : youth.signedIn, // <--- FORCE true
-        };
-        const childId = await createYouth(childToSend);
+        const childId = await createYouth(youth);
         childIDs.push(childId);
       }
       await createHouseHold(houseHold, childIDs);
       alert("Registration completed successfully!");
     } catch (error) {
-      console.error(error);
-      alert("Registration failed");
+      console.error("Error during registration:", error);
+      alert("Registration failed. Please try again.");
     }
   };
-
-
-
-
 
   return (
     <main className="min-h-screen bg-gray-900 flex flex-col items-center p-12">
@@ -189,9 +141,6 @@ export default function RegisterForm() {
             value={houseHold.phone}
             onChange={e => updateHouseHold("phone", e.target.value)}
           />
-          <Switch isSelected={isTemporary} onValueChange={setIsTemporary}>
-            Temporary Registration {isTemporary ? "(Yes)" : "(No)"}
-          </Switch>
         </div>
 
         {/* Youth cards below */}
@@ -252,13 +201,8 @@ export default function RegisterForm() {
               </Select>
 
               <Switch
-                isSelected={isTemporary ? true : youth.signedIn}
-                isDisabled={isTemporary}
-                onValueChange={v => {
-                  if (!isTemporary) {
-                    updateYouth(i, "signedIn", v);
-                  }
-                }}
+                isSelected={youth.signedIn}
+                onValueChange={v => updateYouth(i, "signedIn", v)}
               >
                 Signed In
               </Switch>

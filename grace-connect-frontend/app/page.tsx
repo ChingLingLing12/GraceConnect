@@ -2,77 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Link, Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenu, NavbarMenuItem, NavbarMenuToggle } from "@heroui/react";
-import { Youth } from "./components/YouthCard";
 import Image from "next/image";
 
 import Dashboard from "./pages/Dashboard";
 import Statistics from "./pages/Statistics";
 import Register from "./pages/Register";
-
-export enum Cell {
-  Year12="Year 12 Cell",
-  Year89="Year 8/9 Cell",
-  Year1011="Year 10/11 Cell",
-  Year7="Year 7 Cell",
-}
-
-const sampleYouth: Youth[] = [
-  {
-    firstName: "Alice",
-    lastName: "Smith",
-    signedIn: false,
-    lastSignedIn: "2025-10-26T08:00:00",
-    lastSignedOut: "2025-10-26T12:00:00",
-    cell: Cell.Year1011
-  },
-  {
-    firstName: "Bob",
-    lastName: "Johnson",
-    signedIn: true,
-    lastSignedIn: "2025-10-26T13:00:00",
-    lastSignedOut: "2025-10-26T09:00:00",
-    cell: Cell.Year12
-  },
-  {
-    firstName: "Charlie",
-    lastName: "Lee",
-    signedIn: false,
-    lastSignedIn: "2025-10-26T07:00:00",
-    lastSignedOut: "2025-10-26T14:00:00",
-    cell: Cell.Year89
-  },
-   {
-    firstName: "Joseph",
-    lastName: "Smith",
-    signedIn: false,
-    lastSignedIn: "2025-10-26T08:00:00",
-    lastSignedOut: "2025-10-26T12:00:00",
-    cell: Cell.Year7
-  },
-  {
-    firstName: "Jess",
-    lastName: "Johnson",
-    signedIn: true,
-    lastSignedIn: "2025-10-26T13:00:00",
-    lastSignedOut: "2025-10-26T09:00:00",
-    cell: Cell.Year12
-  },
-  {
-    firstName: "Catherine",
-    lastName: "Lee",
-    signedIn: false,
-    lastSignedIn: "2025-10-26T07:00:00",
-    lastSignedOut: "2025-10-26T14:00:00",
-    cell: Cell.Year1011
-  },
-];
-
+import { Cell, sampleYouth, Youth } from './models';
 
 export default function Home() {
 
   const [youths, setYouths] = useState(sampleYouth);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<"dashboard" | "statistics" | "register">("dashboard");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "statistics" | "Edit Database" | "register">("dashboard");
 
   const handleSelect = (section: typeof activeSection) => {
     // 👇 First close the menu, then update the section
@@ -100,8 +41,9 @@ export default function Home() {
             <Image onClick={() => handleSelect("dashboard")} src="/GMC logo3.jpeg" alt="App Logo" width="55" height="55" style={{ borderRadius: "15px" }}/>
           </NavbarBrand>
           <NavbarContent className="hidden sm:flex gap-6" justify="center">
+
             <NavbarItem>
-               <button
+              <button
                   onClick={() => handleSelect("dashboard")}
                   className={`hover:text-gray-300 transition ${
                     activeSection === "dashboard" ? "text-blue-400" : "text-white"
@@ -110,18 +52,20 @@ export default function Home() {
                   Dashboard
               </button>
             </NavbarItem>
-            <NavbarItem isActive>
-               <button
-              onClick={() => handleSelect("statistics")}
-              className={`hover:text-gray-300 transition ${
-                activeSection === "statistics" ? "text-blue-400" : "text-white"
-              }`}
-            >
+
+            <NavbarItem>
+              <button
+                onClick={() => handleSelect("statistics")}
+                className={`hover:text-gray-300 transition ${
+                  activeSection === "statistics" ? "text-blue-400" : "text-white"
+                }`}
+              > 
               Statistics
             </button>
             </NavbarItem>
+
             <NavbarItem>
-             <button
+            <button
               onClick={() => handleSelect("register")}
               className={`hover:text-gray-300 transition ${
                 activeSection === "register" ? "text-blue-400" : "text-white"
