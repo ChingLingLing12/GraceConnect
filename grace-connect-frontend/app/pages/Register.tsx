@@ -11,7 +11,7 @@ export default function RegisterForm() {
   const [isTemporary, setIsTemporary] = useState(false);
 
   const [houseHold, setHouseHold] = useState<HouseHold>(
-    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] }  //THERE IS EROR BUT DONT TOUCh
+    { _id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] }  //THERE IS EROR BUT DONT TOUCh
   );
   const [youths, setYouths] = useState<Youth[]>([
     { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false, oneTime: isTemporary },

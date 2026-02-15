@@ -5,7 +5,7 @@ import {Cell, HouseHold, Youth } from '../models'
 
 export default function RegisterPage() {
   const [houseHold, setHouseHold] = useState<HouseHold>(
-    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] } 
+    { _id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] } 
   );
   const [youths, setYouths] = useState<Youth[]>([
     { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false },
