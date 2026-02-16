@@ -14,12 +14,12 @@ export enum Cell {
 
 }
 export interface HouseHold {
-  _id: string;
   guardianFirstName: string;
   guardianLastName: string;
   email: string;
   phone: string;
   children?: Youth[];
+  ministry?: "youth" | "sundayschool";
 }
 
 export interface Youth {
@@ -34,6 +34,7 @@ export interface Youth {
   family?: string;
   records?: RecordEntry[];
   oneTime?: boolean;
+  ministry?: "youth" | "sundayschool";
 }
 
 export interface RecordEntry {

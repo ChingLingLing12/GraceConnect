@@ -8,11 +8,43 @@
 @source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 @custom-variant dark (&:is(.dark *));
 
-/* globals.css */
+/* globals.css
 .heroui-label-override,
 .heroui-label-override * {
   color: white !important;
+} */
+/* Target HeroUI inputs, selects, textarea, and autofill */
+.heroui-dark .h-input,
+.heroui-dark .h-select,
+.heroui-dark .h-textarea {
+  background-color: #1f2937 !important; /* dark gray */
+  color: #f9fafb !important;           /* white text */
+  border-color: #374151 !important;    /* subtle border */
+  box-shadow: none !important;
 }
+
+/* Autofill fix */
+.heroui-dark .h-input:-webkit-autofill,
+.heroui-dark .h-input:-webkit-autofill:hover,
+.heroui-dark .h-input:-webkit-autofill:focus,
+.heroui-dark .h-textarea:-webkit-autofill,
+.heroui-dark .h-textarea:-webkit-autofill:hover,
+.heroui-dark .h-textarea:-webkit-autofill:focus,
+.heroui-dark .h-select:-webkit-autofill,
+.heroui-dark .h-select:-webkit-autofill:hover,
+.heroui-dark .h-select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f9fafb !important;
+  -webkit-box-shadow: 0 0 0px 1000px #1f2937 inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Buttons */
+.heroui-dark .h-button {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+  border: none !important;
+}
+
 /* 
 :root {
   --background: #ffffff;

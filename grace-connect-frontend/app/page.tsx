@@ -7,10 +7,14 @@ import Image from "next/image";
 import Dashboard from "./pages/Dashboard";
 import Statistics from "./pages/Statistics";
 import Register from "./pages/Register";
-import { Cell, sampleYouth, Youth } from './models';
+import { Cell, sampleYouth, Youth} from './models';
+
+type Ministry = "youth" | "sundayschool";
+
 
 export default function Home() {
 
+  const [ministry, setMinistry] = useState<Ministry | null>(null);
   const [youths, setYouths] = useState(sampleYouth);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<"dashboard" | "statistics" | "Edit Database" | "register">("dashboard");
@@ -25,14 +29,38 @@ export default function Home() {
   const renderSection = () => {
     switch (activeSection) {
       case "statistics":
-        return <Statistics />;
+        return <Statistics ministry={ministry} />;
       case "register":
-        return <Register />;
+        return <Register ministry={ministry} />;
       default:
-        return <Dashboard />;
+        return <Dashboard ministry={ministry} />;
     }
   };
 
+  if (!ministry) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-6 bg-gray-900 text-white">
+        <Image src="/GMC logo3.jpeg" alt="Logo" width={100} height={100} />
+        <h1 className="text-2xl font-bold">Select Ministry</h1>
+
+        <div className="flex gap-6">
+          <button
+            onClick={() => setMinistry("youth")}
+            className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            Youth
+          </button>
+
+          <button
+            onClick={() => setMinistry("sundayschool")}
+            className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700"
+          >
+            Sunday School
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -119,10 +147,17 @@ export default function Home() {
               Register
             </button>
           </NavbarMenuItem>
+          <NavbarMenuItem>
+            <button
+              onClick={() => setMinistry(null)}
+              className="text-yellow-400"
+            >
+              Change Ministry
+            </button>
+          </NavbarMenuItem>
         </NavbarMenu>
         </Navbar>
-
-        
+      
         <div>{renderSection()}</div>
      
     </div>

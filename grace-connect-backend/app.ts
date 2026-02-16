@@ -30,12 +30,19 @@ app.get ('/api/log', logController.getLogs);
 app.post('/api/log', logController.createLog);
 
 app.get('/api/youth', childController.getChildren);
+app.get('/api/sundayschool', childController.getChildren);
 app.post('/api/youth', childController.createChild);
+app.post('/api/sundayschool', childController.createChild);
 app.put('/api/youth/:_id', childController.editChild);
 app.delete('/api/youth/:_id', childController.deleteChild);
+app.put('/api/sundayschool/:_id', childController.editChild);
+app.delete('/api/sundayschool/:_id', childController.deleteChild);
 
-app.get('/api/household', houseHoldController.getHouseHolds);
-app.post('/api/household', houseHoldController.createHouseHold);
+
+app.get('/api/youth/household', houseHoldController.getHouseHolds);
+app.get('/api/sundayschool/household', houseHoldController.getHouseHolds);
+app.post('/api/youth/household', houseHoldController.createHouseHold);
+app.post('/api/sundayschool/household', houseHoldController.createHouseHold);
 app.put('/api/household/:_id', houseHoldController.editHouseHold);
 app.delete('/api/household/:_id', houseHoldController.deleteHouseHold);
 app.listen(port, () => {

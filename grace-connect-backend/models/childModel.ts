@@ -11,7 +11,12 @@ const childSchema = new mongoose.Schema({
     signedIn: { type: Boolean, default: false },
     lastSignedIn: { type: String},
     lastSignedOut: { type: String},
-    oneTime: Boolean
+    oneTime: Boolean,
+    ministry: {
+        type: String,
+        enum: ["youth", "sundayschool"],
+        required: true
+    },
 });
 
 
