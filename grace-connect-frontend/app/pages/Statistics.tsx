@@ -23,12 +23,9 @@ type Props = {
   ministry: "youth" | "sundayschool" | null;
 };
 
-export default function Statistics() {
+export default function Statistics({ ministry }: Props) {
 
-  const searchParams = useSearchParams();
-      const ministry = searchParams.get("ministry");
-    
-    if (!ministry) return null;
+  if (!ministry) return null;
 
   const CHILD_URL = `/api/${ministry}`;
 

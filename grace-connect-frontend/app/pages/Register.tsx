@@ -4,12 +4,11 @@ import { Input, Button, Select, SelectItem, Switch } from "@heroui/react";
 import { HouseHold, Youth } from "../models";
 import { useSearchParams } from "next/navigation";
 
-export default function RegisterForm() {
-  const searchParams = useSearchParams();
-  const ministry = searchParams.get("ministry") as
-    | "youth"
-    | "sundayschool"
-    | null;
+type Props = {
+  ministry: "youth" | "sundayschool" | null;
+};
+
+export default function RegisterForm({ ministry }: Props) {
 
   if (!ministry) return null;
 

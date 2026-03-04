@@ -7,15 +7,12 @@ import Allview from "../components/Views/AllView";
 import Cellview from "../components/Views/CellView";
 import HouseHoldView from "../components/Views/HouseHoldView";
 import { apiFetch } from "../context/api";
-import { useSearchParams } from "next/navigation";
 
 type Props = {
   ministry: "youth" | "sundayschool" | null;
 };
 
-export default function Dashboard() {
-  const searchParams = useSearchParams();
-  const ministry = searchParams.get("ministry");
+export default function Dashboard({ministry}: Props) {
     
   if (!ministry) return null;
 

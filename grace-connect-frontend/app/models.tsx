@@ -1,6 +1,3 @@
-
-
-
 export const YEAR_GROUPS_YOUTH = [
   "Year 7",
   "Year 8",
