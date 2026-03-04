@@ -16,17 +16,21 @@ import {
   Button,
 } from "@heroui/react";
 import { sampleYouth } from "../models";
+import { apiFetch } from "../context/api";
+import { useSearchParams } from "next/dist/client/components/navigation";
 
 type Props = {
   ministry: "youth" | "sundayschool" | null;
 };
 
-export default function Statistics({ ministry }: Props) {
+export default function Statistics() {
 
-  if (!ministry) return null;
+  const searchParams = useSearchParams();
+      const ministry = searchParams.get("ministry");
+    
+    if (!ministry) return null;
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000";
-  const CHILD_URL = `${API_URL}/api/child?ministry=${ministry}`;
+  const CHILD_URL = `/api/${ministry}`;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [youths, setYouths] = useState(sampleYouth);
@@ -91,7 +95,7 @@ export default function Statistics({ ministry }: Props) {
 
   const fetchChildren = async () => {
     try {
-      const res = await fetch(CHILD_URL);
+      const res = await apiFetch(CHILD_URL);
       if (!res.ok) throw new Error("Network response was not ok");
 
       const data = await res.json();
@@ -117,7 +121,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchYouths = async () => {
       try {
-        const res = await fetch(CHILD_URL);
+        const res = await apiFetch(CHILD_URL);
         if (!res.ok) throw new Error("Network response was not ok");
         const data = await res.json();
         if (data.success && Array.isArray(data.children)) {

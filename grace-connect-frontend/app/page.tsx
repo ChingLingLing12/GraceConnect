@@ -7,14 +7,13 @@ import Image from "next/image";
 import Dashboard from "./pages/Dashboard";
 import Statistics from "./pages/Statistics";
 import Register from "./pages/Register";
-import { Cell, sampleYouth, Youth} from './models';
-
-type Ministry = "youth" | "sundayschool";
-
+import { sampleYouth, Youth} from './models';
+import ProtectedLayout from './components/ProtectedLayout';
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Home() {
-
-  const [ministry, setMinistry] = useState<Ministry | null>(null);
+  const searchParams = useSearchParams();
+  const ministry = searchParams.get("ministry") as "youth" | "sundayschool" | null;
   const [youths, setYouths] = useState(sampleYouth);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<"dashboard" | "statistics" | "Edit Database" | "register">("dashboard");
@@ -29,38 +28,41 @@ export default function Home() {
   const renderSection = () => {
     switch (activeSection) {
       case "statistics":
-        return <Statistics ministry={ministry} />;
+        return <ProtectedLayout><Statistics /></ProtectedLayout>;
       case "register":
-        return <Register ministry={ministry} />;
+        return <Register />;
       default:
-        return <Dashboard ministry={ministry} />;
+        return <ProtectedLayout><Dashboard /></ProtectedLayout>
+;
     }
   };
 
-  if (!ministry) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen gap-6 bg-gray-900 text-white">
-        <Image src="/GMC logo3.jpeg" alt="Logo" width={100} height={100} />
-        <h1 className="text-2xl font-bold">Select Ministry</h1>
+  const router = useRouter();
 
-        <div className="flex gap-6">
-          <button
-            onClick={() => setMinistry("youth")}
-            className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
-            Youth
-          </button>
+if (!ministry) {
+  return (
+    <div className="flex flex-col items-center justify-center h-screen gap-6 bg-gray-900 text-white">
+      <Image src="/GMC logo3.jpeg" alt="Logo" width={100} height={100} />
+      <h1 className="text-2xl font-bold">Select Ministry</h1>
 
-          <button
-            onClick={() => setMinistry("sundayschool")}
-            className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700"
-          >
-            Sunday School
-          </button>
-        </div>
+      <div className="flex gap-6">
+        <button
+          onClick={() => router.push("/login?ministry=youth")}
+          className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700"
+        >
+          Youth
+        </button>
+
+        <button
+          onClick={() => router.push("/login?ministry=sundayschool")}
+          className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700"
+        >
+          Sunday School
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div>
@@ -145,14 +147,6 @@ export default function Home() {
               className="w-full text-left hover:text-gray-300"
             >
               Register
-            </button>
-          </NavbarMenuItem>
-          <NavbarMenuItem>
-            <button
-              onClick={() => setMinistry(null)}
-              className="text-yellow-400"
-            >
-              Change Ministry
             </button>
           </NavbarMenuItem>
         </NavbarMenu>

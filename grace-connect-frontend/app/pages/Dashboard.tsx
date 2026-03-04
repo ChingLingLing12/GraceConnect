@@ -2,23 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { Input, Button, Card, CardBody, CardHeader, Select, SelectItem, Switch } from "@heroui/react";
-import { Cell, HouseHold, Youth, sampleYouth } from "../models";
+import { HouseHold, Youth, sampleYouth } from "../models";
 import Allview from "../components/Views/AllView";
 import Cellview from "../components/Views/CellView";
 import HouseHoldView from "../components/Views/HouseHoldView";
+import { apiFetch } from "../context/api";
+import { useSearchParams } from "next/navigation";
 
 type Props = {
   ministry: "youth" | "sundayschool" | null;
 };
 
-export default function Dashboard({ ministry }: Props) {
+export default function Dashboard() {
+  const searchParams = useSearchParams();
+  const ministry = searchParams.get("ministry");
+    
   if (!ministry) return null;
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000";
-  const BASE_MINISTRY_URL = `${API_URL}/api/${ministry}`;
+  const BASE_MINISTRY_URL = `/api/${ministry}`;
   const YOUTH_URL = BASE_MINISTRY_URL;
   const HOUSEHOLD_URL = `${BASE_MINISTRY_URL}/household`;
-  const LOG_URL = `${API_URL}/api/log`;
+  const LOG_URL = `/api/log`;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [youths, setYouths] = useState<Youth[]>(sampleYouth);
@@ -38,7 +42,7 @@ export default function Dashboard({ ministry }: Props) {
 
   const createLog = async (logEntry: { message: "signIn" | "signOut"; timestamp: string }) => {
     try {
-      const res = await fetch(LOG_URL, {
+      const res = await apiFetch(LOG_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(logEntry),
@@ -54,7 +58,7 @@ export default function Dashboard({ ministry }: Props) {
   const createYouth = async (youth: Omit<Youth, "_id">): Promise<string> => {
     try {
       // Don't send _id for creation
-      const response = await fetch(YOUTH_URL, {
+      const response = await apiFetch(YOUTH_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(youth),
@@ -70,7 +74,7 @@ export default function Dashboard({ ministry }: Props) {
 
   const editYouth = async (_id: string, updates: Partial<Youth>) => {
     try {
-      const res = await fetch(`${YOUTH_URL}/${_id}`, {
+      const res = await apiFetch(`${YOUTH_URL}/${_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
@@ -84,7 +88,7 @@ export default function Dashboard({ ministry }: Props) {
 
   const fetchYouths = async () => {
   try {
-    const res = await fetch(YOUTH_URL);
+    const res = await apiFetch(YOUTH_URL);
     if (!res.ok) throw new Error("Failed to fetch youths");
 
     const data = await res.json();
@@ -108,7 +112,7 @@ export default function Dashboard({ ministry }: Props) {
 
   const fetchHouseholds = async () => {
     try {
-      const res = await fetch(HOUSEHOLD_URL);
+      const res = await apiFetch(HOUSEHOLD_URL);
       if (!res.ok) throw new Error("Failed to fetch households");
       const data = await res.json();
       setHouseholds(Array.isArray(data) ? data : data.households || []);
@@ -120,7 +124,7 @@ export default function Dashboard({ ministry }: Props) {
 
   const editHousehold = async (_id: string, updates: Partial<HouseHold>) => {
     try {
-      const res = await fetch(`${HOUSEHOLD_URL}/${_id}`, {
+      const res = await apiFetch(`${HOUSEHOLD_URL}/${_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
@@ -150,7 +154,7 @@ export default function Dashboard({ ministry }: Props) {
 
   const removeYouth = async (youthId: string) => {
     try {
-      const res = await fetch(`${YOUTH_URL}/${youthId}`, { method: "DELETE" });
+      const res = await apiFetch(`${YOUTH_URL}/${youthId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete youth");
       setNewYouths(prev => prev.filter(y => (y as any)._id !== youthId));
       await fetchYouths();
@@ -166,7 +170,7 @@ const handleSubmit = async (houseHoldID: string, e: React.FormEvent<HTMLFormElem
     for (const youth of newYouths) {
       const childId = await createYouth(youth);
       // Fetch the created youth object by ID (implement fetchYouthById if needed)
-      const res = await fetch(`${YOUTH_URL}/${childId}`);
+      const res = await apiFetch(`${YOUTH_URL}/${childId}`);
       const data = await res.json();
       createdYouths.push(data.child);
     }
@@ -220,7 +224,9 @@ const handleSubmit = async (houseHoldID: string, e: React.FormEvent<HTMLFormElem
     return matchesSearch && matchesFilter;
   });
 
-  const groupedByCell = Object.values(Cell).map(cellName => ({
+  const groupedByCell = Array.from(
+    new Set(filteredYouths.map(y => y.cell))
+  ).map(cellName => ({
     cell: cellName,
     youths: filteredYouths.filter(y => y.cell === cellName),
   }));

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const cellValues = ['Year 12 Cell', 'Year 8/9 Cell', 'Year 10/11 Cell', 'Year 7 Cell', 'Little Light [Kindy to PP]', 'Little Candle [Y1-Y2]', 'Lighthouse [Y3-Y4]', 'Flame [Y5]', 'Torch Bearer [Y6 above]'];
+const cellValues = ['Year 12', 'Year 11', 'Year 10', 'Year 9', 'Year 8', 'Year 7', 'Little Light [Kindy to PP]', 'Little Candle [Y1-Y2]', 'Lighthouse [Y3-Y4]', 'Flame [Y5]', 'Torch Bearer [Y6 above]'];
 
 const childSchema = new mongoose.Schema({
     firstName: String,

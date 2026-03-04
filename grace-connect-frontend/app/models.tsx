@@ -1,18 +1,20 @@
 
 
 
-export enum Cell {
-  Year7 = "Year 7 Cell",
-  Year89 = "Year 8/9 Cell",
-  Year1011 = "Year 10/11 Cell",
-  Year12 = "Year 12 Cell",
-  LittleLight = "Little Light [Kindy to PP]",
-  LittleCandle = "Little Candle [Y1-Y2]",
-  Lighthouse = "Lighthouse [Y3-Y4]",
-  Flame = "Flame [Y5]",
-  TorchBearer = "Torch Bearer [Y6 above]",
+export const YEAR_GROUPS_YOUTH = [
+  "Year 7",
+  "Year 8",
+  "Year 10",
+  "Year 11",
+  "Year 12"];
 
-}
+export const YEAR_GROUPS_SUNDAY_SCHOOL = [
+  "Little Light [Kindy to PP]",
+  "Little Candle [Y1-Y2]", 
+  "Lighthouse [Y3-Y4]",
+  "Flame [Y5]",
+  "Torch Bearer [Y6 above]" ]
+
 export interface HouseHold {
   guardianFirstName: string;
   guardianLastName: string;
@@ -61,7 +63,7 @@ export const sampleYouth: Youth[] = [
         signedIn: false,
         lastSignedIn: "2025-10-26T08:00:00",
         lastSignedOut: "2025-10-26T12:00:00",
-        cell: Cell.Year7,
+        cell: "Year 7",
         age: 82
     },
 ];
