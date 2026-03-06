@@ -1,38 +1,28 @@
-# Stage 1: build
-FROM node:20 AS build
+# Use Node 20 LTS
+FROM node:20
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json first
+# Copy package.json first
 COPY package*.json ./
 
-# Install all dependencies (including devDependencies for build)
+# Explicitly install all dependencies including devDependencies
 RUN npm install --include=dev
 
-# Copy source code
+# Install TypeScript globally as a safety net
+RUN npm install -g typescript ts-node
+
+# Copy the rest of the source code
 COPY . .
 
-RUN npm install typescript ts-node --save-dev
-
-RUN ./node_modules/.bin/tsc --version
-
 # Build TypeScript
-RUN npm run build
+RUN tsc
 
-# Stage 2: production
-FROM node:20 AS prod
-
-WORKDIR /app
-
-# Copy only runtime dependencies
-COPY package*.json ./
-RUN npm install --omit=dev
-
-# Copy built files from build stage
-COPY --from=build /app/dist ./dist
+# Switch to production environment
+ENV NODE_ENV=production
 
 # Expose port
 EXPOSE 5000
 
-# Start backend
-CMD ["npm", "start"]
+# Start the backend
+CMD ["node", "dist/app.js"]
