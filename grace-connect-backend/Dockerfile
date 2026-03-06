@@ -14,6 +14,8 @@ COPY . .
 
 RUN npm install typescript ts-node --save-dev
 
+RUN ./node_modules/.bin/tsc --version
+
 # Build TypeScript
 RUN npm run build
 
@@ -33,4 +35,4 @@ COPY --from=build /app/dist ./dist
 EXPOSE 5000
 
 # Start backend
-CMD ["node", "dist/app.js"]
+CMD ["npm", "start"]
