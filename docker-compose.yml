@@ -5,7 +5,7 @@ services:
     container_name: frontend
     restart: always
     environment:
-      - NEXT_PUBLIC_API_URL=/api
+      - NEXT_PUBLIC_API_URL=https://api.graceconnect.au/api
     networks:
       - graceconnect-net
 
