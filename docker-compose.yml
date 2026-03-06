@@ -1,27 +1,26 @@
+version: "3.9"
 services:
   frontend:
     build: ./grace-connect-frontend
     container_name: frontend
     restart: always
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    env_file:
-      - ./grace-connect-backend/.env.production
+    environment:
+      - NEXT_PUBLIC_API_URL=/api
+    networks:
+      - graceconnect-net
 
   backend:
     build: ./grace-connect-backend
     container_name: backend
     restart: always
-    ports:
-      - "5000:5000"
     env_file:
       - ./grace-connect-backend/.env.production
-  
+    networks:
+      - graceconnect-net
+
   nginx:
     image: nginx:latest
-    container_name: graceconnect-nginx-1
+    container_name: graceconnect-nginx
     restart: always
     ports:
       - "80:80"
@@ -32,3 +31,9 @@ services:
     depends_on:
       - frontend
       - backend
+    networks:
+      - graceconnect-net
+
+networks:
+  graceconnect-net:
+    driver: bridge
