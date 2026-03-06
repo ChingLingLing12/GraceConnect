@@ -11,10 +11,12 @@ export const apiFetch = async (url: string, options: any = {}) => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
     ...options,
     headers,
+    credentials: "include", // Important for cookies / auth
   });
 
   if (!res.ok) {
-    throw new Error(`API Error: ${res.status}`);
+    const errText = await res.text().catch(() => "");
+    throw new Error(`API Error: ${res.status} ${errText}`);
   }
 
   return res.json();
