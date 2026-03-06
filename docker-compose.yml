@@ -1,7 +1,7 @@
 services:
   frontend:
     build: ./grace-connect-frontend
-    container_name: nextjs_app
+    container_name: frontend
     restart: always
     ports:
       - "3000:3000"
@@ -12,7 +12,7 @@ services:
 
   backend:
     build: ./grace-connect-backend
-    container_name: express_api
+    container_name: backend
     restart: always
     ports:
       - "5000:5000"
