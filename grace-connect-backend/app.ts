@@ -13,7 +13,7 @@ const port = process.env.PORT || 4000;
 
 // CORS configuration
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000',"https://grace-connect.vercel.app"],
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000',"https://grace-connect.vercel.app","https://www.graceconnect.au"],
     credentials: true,
     optionsSuccessStatus: 200
 }));
