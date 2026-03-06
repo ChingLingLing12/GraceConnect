@@ -4,8 +4,8 @@ services:
     build: ./grace-connect-frontend
     container_name: frontend
     restart: always
-    environment:
-      - NEXT_PUBLIC_API_URL=https://api.graceconnect.au/api
+    env_file:
+      - ./grace-connect-frontend/.env.production
     networks:
       - graceconnect-net
 
