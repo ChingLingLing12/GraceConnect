@@ -21,11 +21,14 @@ services:
   
   nginx:
     image: nginx:latest
+    container_name: graceconnect-nginx-1
+    restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
     volumes:
       - ./nginx:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - frontend
       - backend
