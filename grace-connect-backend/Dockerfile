@@ -12,6 +12,8 @@ RUN npm install --include=dev
 # Copy source code
 COPY . .
 
+RUN npm install typescript ts-node --save-dev
+
 # Build TypeScript
 RUN npm run build
 
