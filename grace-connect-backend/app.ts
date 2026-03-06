@@ -12,20 +12,10 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // CORS configuration
+// === GLOBAL CORS ===
 app.use(cors({
-    origin: ['http://localhost:3000', 
-        'http://127.0.0.1:3000',
-        "https://www.graceconnect.au",
-        'https://graceconnect.au',
-        'https://api.graceconnect.au' 
-    ],
-    credentials: true,
-    methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-    allowedHeaders: ["Content-Type","Authorization"],
-    optionsSuccessStatus: 200
+  origin: ["https://www.graceconnect.au", "http://localhost:3000", "https://graceconnect.au"]
 }));
-
-app.options("*", cors());
 
 app.use(express.json());
 
