@@ -1,30 +1,76 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input, Button, Select, SelectItem, Switch } from "@heroui/react";
-import { create } from "domain";
-import {Cell, HouseHold, Youth } from '../models'
+import { HouseHold, Youth } from "../models";
+import { useSearchParams } from "next/navigation";
 
+type Props = {
+  ministry: "youth" | "sundayschool" | null;
+};
 
-export default function RegisterForm() {
+export default function RegisterForm({ ministry }: Props) {
 
-  
+  if (!ministry) return null;
+
   const [isTemporary, setIsTemporary] = useState(false);
 
-  const [houseHold, setHouseHold] = useState<HouseHold>(
-    { id: String(Date.now()), guardianFirstName: "", guardianLastName: "", email: "", phone: "", children: [] }  //THERE IS EROR BUT DONT TOUCh
-  );
-  const [youths, setYouths] = useState<Youth[]>([
-    { _id: String(Date.now()), firstName: "", lastName: "", age: 0, signedIn: false, oneTime: isTemporary },
+  const [houseHold, setHouseHold] = useState<Omit<HouseHold, "_id">>({
+    guardianFirstName: "",
+    guardianLastName: "",
+    email: "",
+    phone: "",
+    children: [],
+  });
+
+  const [youths, setYouths] = useState<Omit<Youth, "_id">[]>([
+    {
+      firstName: "",
+      lastName: "",
+      age: 0,
+      signedIn: false,
+      oneTime: false,
+      cell: "",
+      ministry,
+    },
   ]);
 
-  const updateHouseHold = <K extends keyof HouseHold>(field: K, value: HouseHold[K]) => {
-    setHouseHold(prev => ({ ...prev, [field]: value }));
+  // ==========================
+  // BACKEND ENUM VALUES (MATCH EXACTLY)
+  // ==========================
+  const YEAR_GROUP_OPTIONS =
+    ministry === "youth"
+      ? [
+          "Year 7",
+          "Year 8",
+          "Year 9",
+          "Year 10",
+          "Year 11",
+          "Year 12",
+        ]
+      : [
+          "Little Light [Kindy to PP]",
+          "Little Candle [Y1-Y2]",
+          "Lighthouse [Y3-Y4]",
+          "Flame [Y5]",
+          "Torch Bearer [Y6 above]",
+        ];
+
+  // ==========================
+  // STATE HELPERS
+  // ==========================
+  const updateHouseHold = <K extends keyof HouseHold>(
+    field: K,
+    value: HouseHold[K]
+  ) => {
+    setHouseHold((prev) => ({ ...prev, [field]: value }));
   };
 
-
-
-  const updateYouth = <K extends keyof Youth>(index: number, field: K, value: Youth[K]) => {
-    setYouths(prev => {
+  const updateYouth = <K extends keyof Youth>(
+    index: number,
+    field: K,
+    value: Youth[K]
+  ) => {
+    setYouths((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
       return copy;
@@ -32,232 +78,234 @@ export default function RegisterForm() {
   };
 
   const addYouth = () => {
-    setYouths(prev => [
+    setYouths((prev) => [
       ...prev,
-      { _id: String(Date.now()) + Math.random(), firstName: "", lastName: "", age: 0, signedIn: false, oneTime: isTemporary },
+      {
+        firstName: "",
+        lastName: "",
+        age: 0,
+        signedIn: false,
+        oneTime: false,
+        cell: "",
+        ministry,
+      },
     ]);
   };
 
   const removeYouth = (index: number) => {
-    setYouths(prev => prev.filter((_, i) => i !== index));
+    setYouths((prev) => prev.filter((_, i) => i !== index));
   };
 
-  //API calls to backend
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000';
-  const YOUTH_URL = `${API_URL}/api/youth`;
-  const HOUSEHOLD_URL = `${API_URL}/api/household`;
-  const LOG_URL = `${API_URL}/api/log`;
+  // Reset when ministry changes
+  useEffect(() => {
+    setHouseHold({
+      guardianFirstName: "",
+      guardianLastName: "",
+      email: "",
+      phone: "",
+      children: [],
+    });
 
-  const createHouseHold = async (houseHold: HouseHold, childIDs: string[]) => {
-    try {
-      console.log("Creating household with children IDs:", childIDs);
-      const response = await fetch(HOUSEHOLD_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...houseHold, children: childIDs }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to create household");
-      }
-    } catch (error) {
-      console.error("Error creating household:", error);
-    }
-  };
+    setYouths([
+      {
+        firstName: "",
+        lastName: "",
+        age: 0,
+        signedIn: false,
+        oneTime: false,
+        cell: "",
+        ministry,
+      },
+    ]);
 
-    const createLog = async (logEntry: { message: 'signIn' | 'signOut'; timestamp: string; }) => {
-    try {
-      const res = await fetch(LOG_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(logEntry),
-      });
+    setIsTemporary(false);
+  }, [ministry]);
 
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data = await res.json();
-      console.log('Log created:', data);
-      return data.log._id;
-    } catch (error) {
-      console.error('Error creating log:', error);
-    }
-  };
-  const createYouth = async (youth: Youth): Promise<string> => {
-    try {
-      let payload;
-      if(youth.signedIn){
-        console.log("Creating youth with sign-in log");
-        payload = {
-          ...youth,
-          oneTime: isTemporary, // 🔥 always correct
-          records: [await createLog({message: 'signIn', timestamp: new Date().toISOString()})]
-        };
-      } 
-      else {
-        payload = {
-          ...youth,
-          oneTime: isTemporary, // 🔥 always correct
-        };
-      }
-      const response = await fetch(YOUTH_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to create youth");
-      }
-      const data = await response.json();
-      console.log("Youth created:", data);
-      // Return the MongoDB _id from the created youth
-      return data.child._id;
-    } catch (error) {
-      console.error("Error creating youth:", error);
-      throw error;
-    }
-  };
-  
+  // ==========================
+  // API CONFIG
+  // ==========================
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000";
+  const BASE_MINISTRY_URL = `${API_URL}/api/${ministry}`;
+  const YOUTH_URL = BASE_MINISTRY_URL;
+  const HOUSEHOLD_URL = `${BASE_MINISTRY_URL}/household`;
+
+  // ==========================
+  // SUBMIT
+  // ==========================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required Year Group
+    for (const youth of youths) {
+      if (!youth.cell) {
+        alert("Please select a Year Group for all youths.");
+        return;
+      }
+    }
+
     try {
       const childIDs: string[] = [];
+
       for (const youth of youths) {
-        const childToSend = {
-          ...youth,
-          oneTime: isTemporary,
-          signedIn: isTemporary ? true : youth.signedIn, // <--- FORCE true
-        };
-        const childId = await createYouth(childToSend);
-        childIDs.push(childId);
+        const response = await fetch(YOUTH_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...youth,
+            ministry,
+            oneTime: isTemporary,
+            signedIn: isTemporary ? true : youth.signedIn,
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to create youth");
+
+        const data = await response.json();
+        childIDs.push(data.child._id);
       }
-      await createHouseHold(houseHold, childIDs);
+
+      await fetch(HOUSEHOLD_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...houseHold,
+          ministry,
+          children: childIDs,
+        }),
+      });
+
       alert("Registration completed successfully!");
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert("Registration failed");
     }
   };
 
-
-
-
-
+  // ==========================
+  // UI
+  // ==========================
   return (
     <main className="min-h-screen bg-gray-900 flex flex-col items-center p-12">
-      <form onSubmit={handleSubmit} className="w-full max-w-3xl space-y-8 heroui-label-override">
-        {/* Main registration info (centered) */}
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-3xl space-y-8 heroui-dark"
+      >
+        {/* Guardian Info */}
         <div className="flex flex-col items-center space-y-4">
+          <h2 className="text-2xl font-bold text-white text-center">
+            {ministry === "youth"
+              ? "Youth Registration"
+              : "Sunday School Registration"}
+          </h2>
+
           <Input
-            isRequired
             label="Guardian First Name"
-            variant="bordered"
-            labelPlacement="outside"
-            placeholder="Enter your first name"
             value={houseHold.guardianFirstName}
-            onChange={e => updateHouseHold("guardianFirstName", e.target.value)}
-          />
-          <Input
+            onChange={(e) =>
+              updateHouseHold("guardianFirstName", e.target.value)
+            }
             isRequired
+          />
+
+          <Input
             label="Guardian Last Name"
-            variant="bordered"
-            labelPlacement="outside"
-            placeholder="Enter your last name"
             value={houseHold.guardianLastName}
-            onChange={e => updateHouseHold("guardianLastName", e.target.value)}
-          />
-          <Input
+            onChange={(e) =>
+              updateHouseHold("guardianLastName", e.target.value)
+            }
             isRequired
-            type="email"
+          />
+
+          <Input
             label="Guardian Email"
-            variant="bordered"
-            labelPlacement="outside"
-            placeholder="Enter your email"
+            type="email"
             value={houseHold.email}
-            onChange={e => updateHouseHold("email", e.target.value)}
-          />
-          <Input
+            onChange={(e) => updateHouseHold("email", e.target.value)}
             isRequired
-            type="tel"
-            label="Guardian Phone Number"
-            variant="bordered"
-            labelPlacement="outside"
-            placeholder="Enter your phone number"
-            value={houseHold.phone}
-            onChange={e => updateHouseHold("phone", e.target.value)}
           />
+
+          <Input
+            label="Guardian Phone"
+            type="tel"
+            value={houseHold.phone}
+            onChange={(e) => updateHouseHold("phone", e.target.value)}
+            isRequired
+          />
+
           <Switch isSelected={isTemporary} onValueChange={setIsTemporary}>
             Temporary Registration {isTemporary ? "(Yes)" : "(No)"}
           </Switch>
         </div>
 
-        {/* Youth cards below */}
+        {/* Youth Cards */}
         <div className="flex flex-wrap gap-4 justify-center">
           {youths.map((youth, i) => (
-            <div key={youth._id} className="border p-4 rounded-2xl space-y-3 flex-none w-[280px]">
+            <div
+              key={i}
+              className="border p-4 rounded-2xl space-y-3 flex-none w-[280px]"
+            >
               <div className="flex justify-between items-center">
-                <h3 className="text-sm font-semibold text-white">Youth {i + 1}</h3>
+                <h3 className="text-sm font-semibold text-white">
+                  Youth {i + 1}
+                </h3>
                 {youths.length > 1 && (
-                  <Button size="sm" variant="flat" color="danger" onPress={() => removeYouth(i)}>
+                  <Button
+                    size="sm"
+                    color="danger"
+                    onPress={() => removeYouth(i)}
+                  >
                     Remove
                   </Button>
                 )}
               </div>
 
               <Input
-                isRequired
                 label="First Name"
-                variant="bordered"
-                labelPlacement="outside"
-                placeholder="Enter first name"
                 value={youth.firstName}
-                onChange={e => updateYouth(i, "firstName", e.target.value)}
+                onChange={(e) =>
+                  updateYouth(i, "firstName", e.target.value)
+                }
+                isRequired
               />
 
               <Input
-                isRequired
                 label="Last Name"
-                variant="bordered"
-                labelPlacement="outside"
-                placeholder="Enter last name"
                 value={youth.lastName}
-                onChange={e => updateYouth(i, "lastName", e.target.value)}
+                onChange={(e) =>
+                  updateYouth(i, "lastName", e.target.value)
+                }
+                isRequired
               />
 
               <Input
-                isRequired
                 label="Age"
-                variant="bordered"
-                labelPlacement="outside"
-                placeholder="Enter age"
+                type="number"
                 value={String(youth.age)}
-                onChange={e => updateYouth(i, "age", Number(e.target.value))}
+                onChange={(e) =>
+                  updateYouth(i, "age", Number(e.target.value))
+                }
+                isRequired
               />
 
+              {/* RENAMED TO YEAR GROUP (but still uses `cell`) */}
               <Select
-                label="Cell Group"
-                placeholder="Select a cell group" variant="bordered"
+                label="Year Group"
                 selectedKeys={youth.cell ? new Set([youth.cell]) : new Set()}
-                onSelectionChange={keys => {
-                  const selected = Array.from(keys)[0] as Cell | undefined;
-                  updateYouth(i, "cell", selected);
-                }}
+                onSelectionChange={(keys) =>
+                  updateYouth(i, "cell", Array.from(keys)[0] as string)
+                }
+                isRequired
               >
-                {Object.values(Cell).map(val => (
-                  <SelectItem key={val}>{val}</SelectItem>
+                {YEAR_GROUP_OPTIONS.map((option) => (
+                  <SelectItem key={option}>{option}</SelectItem>
                 ))}
               </Select>
 
               <Switch
                 isSelected={isTemporary ? true : youth.signedIn}
                 isDisabled={isTemporary}
-                onValueChange={v => {
-                  if (!isTemporary) {
-                    updateYouth(i, "signedIn", v);
-                  }
+                onValueChange={(v) => {
+                  if (!isTemporary) updateYouth(i, "signedIn", v);
                 }}
               >
                 Signed In
@@ -266,9 +314,8 @@ export default function RegisterForm() {
           ))}
         </div>
 
-        {/* Add Youth & Submit buttons */}
         <div className="flex flex-col md:flex-row justify-center gap-4 mt-4">
-          <Button type="button" variant="bordered" onPress={addYouth}>
+          <Button type="button" onPress={addYouth}>
             + Add Another Youth
           </Button>
           <Button type="submit" color="primary">

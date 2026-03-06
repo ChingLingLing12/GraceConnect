@@ -1,0 +1,80 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.houseHoldController = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
+const houseHoldModel_1 = __importDefault(require("../models/houseHoldModel"));
+const HouseHold = mongoose_1.default.models.HouseHold || mongoose_1.default.model("HouseHold", houseHoldModel_1.default);
+exports.houseHoldController = {
+    createHouseHold: async (req, res) => {
+        try {
+            const houseHold = new HouseHold(req.body);
+            console.log('Creating Household with data:', req.body);
+            const houseHoldList = await HouseHold.findOne({ guardianFirstName: req.body.guardianFirstName, guardianLastName: req.body.guardianLastName, email: req.body.email, phone: req.body.phone });
+            if (houseHoldList) {
+                console.log('Household already exists:', houseHoldList._id);
+                if (houseHoldList.children.includes(...req.body.children)) {
+                    return res.status(400).json({ error: 'Children already exist in the household' });
+                }
+                req.body.children = [...new Set([...houseHoldList.children, ...req.body.children])];
+                await HouseHold.findByIdAndUpdate(houseHoldList._id, req.body);
+                return res.status(500).json({ error: 'Household already exists, updated' });
+            }
+            await houseHold.save();
+            console.log('Current Households in DB:', houseHoldList);
+            res.status(201).json(houseHold);
+        }
+        catch (error) {
+            console.error('Error creating household:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+    getHouseHolds: async (req, res) => {
+        try {
+            const houseHolds = await HouseHold.find().populate('children', 'firstName lastName age cell isSignedin');
+            res.status(200).json(houseHolds);
+        }
+        catch (error) {
+            console.error('Error fetching households:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+    editHouseHold: async (req, res) => {
+        try {
+            const { _id } = req.params;
+            const updates = req.body;
+            // If children array is provided, use $push to append
+            if (updates.children) {
+                const updatedHouseHold = await HouseHold.findByIdAndUpdate(_id, { $push: { children: { $each: updates.children } } }, { new: true });
+                return res.status(200).json(updatedHouseHold);
+            }
+            // Otherwise, do a normal update
+            const updatedHouseHold = await HouseHold.findByIdAndUpdate(_id, updates, { new: true });
+            if (!updatedHouseHold)
+                return res.status(404).json({ error: 'Household not found' });
+            res.status(200).json(updatedHouseHold);
+        }
+        catch (error) {
+            console.error('Error updating household:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+    deleteHouseHold: async (req, res) => {
+        try {
+            const { _id } = req.params; // the ID of the houseHold to delete
+            const deleteHouseHold = await HouseHold.findByIdAndDelete(_id);
+            if (!deleteHouseHold) {
+                return res.status(404).json({ success: false, error: "houseHold not found" });
+            }
+            res.status(200).json({ success: true, message: "houseHold deleted", _id });
+        }
+        catch (error) {
+            console.error("Error deleting houseHold:", error);
+            res.status(500).json({ success: false, error: "Failed to delete houseHold" });
+        }
+    }
+};
+exports.default = exports.houseHoldController;
+//# sourceMappingURL=houseHoldController.js.map

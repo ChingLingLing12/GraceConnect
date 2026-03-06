@@ -6,3 +6,9 @@ MAC: rm -rf node_modules
 frontend: npm run dev
 
 npm install react-chartjs-2 chart.js
+
+DOCKER: (in this directory run)
+docker compose up -d --build
+
+to close run:
+docker compose down

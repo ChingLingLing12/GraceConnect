@@ -16,10 +16,18 @@ import {
   Button,
 } from "@heroui/react";
 import { sampleYouth } from "../models";
+import { apiFetch } from "../context/api";
+import { useSearchParams } from "next/dist/client/components/navigation";
 
-export default function Statistics() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000";
-  const YOUTH_URL = `${API_URL}/api/youth`;
+type Props = {
+  ministry: "youth" | "sundayschool" | null;
+};
+
+export default function Statistics({ ministry }: Props) {
+
+  if (!ministry) return null;
+
+  const CHILD_URL = `/api/${ministry}`;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [youths, setYouths] = useState(sampleYouth);
@@ -78,13 +86,39 @@ export default function Statistics() {
     }
   };
 
+  //refetch when switching ministry
+  useEffect(() => {
+  if (!ministry) return;
+
+  const fetchChildren = async () => {
+    try {
+      const res = await apiFetch(CHILD_URL);
+      if (!res.ok) throw new Error("Network response was not ok");
+
+      const data = await res.json();
+      if (data.success && Array.isArray(data.children)) {
+        setYouths(data.children);
+      }
+    } catch (error) {
+      console.error("Error fetching children:", error);
+    }
+  };
+
+  fetchChildren();
+}, [ministry]);
+
+useEffect(() => {
+  setTablePage(0);
+  setWeekOffset(0);
+}, [ministry]);
+
   /* ===========================
      FETCH YOUTHS
      =========================== */
   useEffect(() => {
     const fetchYouths = async () => {
       try {
-        const res = await fetch(YOUTH_URL);
+        const res = await apiFetch(CHILD_URL);
         if (!res.ok) throw new Error("Network response was not ok");
         const data = await res.json();
         if (data.success && Array.isArray(data.children)) {
@@ -266,7 +300,9 @@ export default function Statistics() {
     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
       <div className="w-full max-w-6xl mx-auto px-4">
         <h3 className="text-2xl font-semibold mb-6 text-center">
-          Grace Connect Check-In System
+          {ministry === "youth"
+            ? "Youth Check-In Statistics"
+            : "Sunday School Check-In Statistics"}
         </h3>
 
         <h3 className="mb-8 text-center text-gray-400">
