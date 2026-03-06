@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes";
 import { protect } from "./middleware/authMiddleware";
 import 'dotenv/config';
 import cors from 'cors';
+import { Request, Response } from "express";
 
 const express = require('express');
 const app = express();
@@ -24,10 +25,10 @@ app.use(cors({
     allowedHeaders: ["Content-Type","Authorization"],
 }));
 
-app.options("*", (req, res) => {
-  res.sendStatus(200);
+app.options("*", (_req: Request, res: Response) => {
+  // If sendStatus causes errors, use res.status(200).end() instead
+  res.status(200).end();
 });
-
 app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/graceconnect').then(() => {
