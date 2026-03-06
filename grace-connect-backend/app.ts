@@ -26,8 +26,11 @@ app.use(cors({
 }));
 
 app.options("*", (_req: Request, res: Response) => {
-  // If sendStatus causes errors, use res.status(200).end() instead
-  res.status(200).end();
+    res.setHeader("Access-Control-Allow-Origin", "https://www.graceconnect.au");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.status(200).end();
 });
 app.use(express.json());
 
