@@ -23,9 +23,7 @@ services:
     image: nginx:latest
     container_name: graceconnect-nginx-1
     restart: always
-    ports:
-      - "80:80"      # HTTP
-      - "443:443"    # HTTPS
+    network_mode: "host"
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt:ro
