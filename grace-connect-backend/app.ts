@@ -10,15 +10,14 @@ import { Request, Response } from "express";
 
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 5000;
 
 // CORS configuration
 app.use(cors({
     origin: ['http://localhost:3000', 
         'http://127.0.0.1:3000',
         "https://www.graceconnect.au",
-        'https://graceconnect.au',
-        'https://api.graceconnect.au' 
+        'https://graceconnect.au'
     ],
     credentials: true,
     methods: ["GET","POST","PUT","DELETE","OPTIONS"],
