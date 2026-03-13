@@ -119,13 +119,12 @@ export default function Dashboard({ministry}: Props) {
 
   const editHousehold = async (_id: string, updates: Partial<HouseHold>) => {
     try {
-      const res = await apiFetch(`${HOUSEHOLD_URL}/${_id}`, {
+      const data = await apiFetch(`${HOUSEHOLD_URL}/${_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
-      if (!res.ok) throw new Error("Network response was not ok");
-      return await res.json();
+      return await data;
     } catch (error) {
       console.error("Error updating household:", error);
     }

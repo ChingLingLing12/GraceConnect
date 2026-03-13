@@ -92,10 +92,8 @@ export default function Statistics({ ministry }: Props) {
 
   const fetchChildren = async () => {
     try {
-      const res = await apiFetch(CHILD_URL);
-      if (!res.ok) throw new Error("Network response was not ok");
+      const data = await apiFetch(CHILD_URL);
 
-      const data = await res.json();
       if (data.success && Array.isArray(data.children)) {
         setYouths(data.children);
       }
@@ -118,9 +116,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchYouths = async () => {
       try {
-        const res = await apiFetch(CHILD_URL);
-        if (!res.ok) throw new Error("Network response was not ok");
-        const data = await res.json();
+        const data = await apiFetch(CHILD_URL);
         if (data.success && Array.isArray(data.children)) {
           setYouths(data.children);
         }
