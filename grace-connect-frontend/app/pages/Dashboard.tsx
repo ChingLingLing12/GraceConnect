@@ -85,10 +85,8 @@ export default function Dashboard({ministry}: Props) {
 
   const fetchYouths = async () => {
   try {
-    const res = await apiFetch(YOUTH_URL);
-    if (!res.ok) throw new Error("Failed to fetch youths");
-
-    const data = await res.json();
+    const data = await apiFetch(YOUTH_URL);
+    console.log("API youth response:", data);
     let children: Youth[] = [];
 
     if (data.success && Array.isArray(data.children)) {
@@ -108,16 +106,16 @@ export default function Dashboard({ministry}: Props) {
 };
 
   const fetchHouseholds = async () => {
-    try {
-      const res = await apiFetch(HOUSEHOLD_URL);
-      if (!res.ok) throw new Error("Failed to fetch households");
-      const data = await res.json();
-      setHouseholds(Array.isArray(data) ? data : data.households || []);
-    } catch (error) {
-      console.error("Error fetching households:", error);
-      setHouseholds([]);
-    }
-  };
+  try {
+    const data = await apiFetch(HOUSEHOLD_URL);
+    console.log("API household response:", data);
+
+    setHouseholds(Array.isArray(data) ? data : data.households || []);
+  } catch (error) {
+    console.error("Error fetching households:", error);
+    setHouseholds([]);
+  }
+};
 
   const editHousehold = async (_id: string, updates: Partial<HouseHold>) => {
     try {
