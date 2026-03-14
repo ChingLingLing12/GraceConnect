@@ -107,7 +107,7 @@ export default function Dashboard({ministry}: Props) {
 
   const fetchHouseholds = async () => {
   try {
-    const data = await apiFetch(HOUSEHOLD_URL);
+    const data = await apiFetch(`${HOUSEHOLD_URL}?ministry=${ministry}`);
     console.log("API household response:", data);
 
     setHouseholds(Array.isArray(data) ? data : data.households || []);
@@ -116,7 +116,6 @@ export default function Dashboard({ministry}: Props) {
     setHouseholds([]);
   }
 };
-
   const editHousehold = async (_id: string, updates: Partial<HouseHold>) => {
     try {
       const data = await apiFetch(`${HOUSEHOLD_URL}/${_id}`, {

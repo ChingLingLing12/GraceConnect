@@ -28,13 +28,15 @@ export const childController = {
         });
       }
 
+      console.log("Incoming youth:", req.body);
+
       const now = new Date().toISOString();
 
       const newChild = new Child({
         firstName,
         lastName,
         age,
-        cell: ministry === "youth" ? cell : undefined,
+        cell,
         signedIn: signedIn ?? false,
         oneTime: oneTime ?? false,
         ministry,

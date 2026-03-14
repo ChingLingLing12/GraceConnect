@@ -6,7 +6,7 @@ const childSchema = new mongoose.Schema({
     firstName: String,
     lastName: String,
     age: Number,
-    cell: { type: String, enum: cellValues },
+    cell: { type: String },
     records: [ {type: mongoose.Schema.Types.ObjectId, ref: 'Log'} ],
     signedIn: { type: Boolean, default: false },
     lastSignedIn: { type: String},

@@ -175,11 +175,37 @@ export default function RegisterForm({ ministry }: Props) {
       });
 
       alert("Registration completed successfully!");
+
+      resetForm();
     } catch (err) {
       console.error(err);
       alert("Registration failed");
     }
   };
+
+  const resetForm = () => {
+  setHouseHold({
+    guardianFirstName: "",
+    guardianLastName: "",
+    email: "",
+    phone: "",
+    children: [],
+  });
+
+  setYouths([
+    {
+      firstName: "",
+      lastName: "",
+      age: 0,
+      signedIn: false,
+      oneTime: false,
+      cell: "",
+      ministry,
+    },
+  ]);
+
+  setIsTemporary(false);
+};
 
   // ==========================
   // UI
@@ -232,9 +258,13 @@ export default function RegisterForm({ ministry }: Props) {
             isRequired
           />
 
-          <Switch isSelected={isTemporary} onValueChange={setIsTemporary}>
-            Temporary Registration {isTemporary ? "(Yes)" : "(No)"}
-          </Switch>
+          <div className="flex items-center gap-2">
+            <Switch
+              isSelected={isTemporary}
+              onValueChange={setIsTemporary}
+            />
+            <span className="text-white text-sm">Sign all in now</span>
+          </div>
         </div>
 
         {/* Youth Cards */}
@@ -301,15 +331,16 @@ export default function RegisterForm({ ministry }: Props) {
                 ))}
               </Select>
 
+              <div className="flex items-center gap-2">
               <Switch
                 isSelected={isTemporary ? true : youth.signedIn}
                 isDisabled={isTemporary}
                 onValueChange={(v) => {
                   if (!isTemporary) updateYouth(i, "signedIn", v);
                 }}
-              >
-                Signed In
-              </Switch>
+              />
+              <span className="text-white text-sm">Sign in now</span>
+            </div>
             </div>
           ))}
         </div>
