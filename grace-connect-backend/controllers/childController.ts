@@ -5,9 +5,18 @@ const Child =
   mongoose.models.Child ||
   mongoose.model("Child", childSchema);
 
-export const childController = {
+const formatLogRecord = (record: any) => ({
+  ...record,
+  signInTime: record?.signInTime
+    ? new Date(record.signInTime).toLocaleString()
+    : null,
+  signOutTime: record?.signOutTime
+    ? new Date(record.signOutTime).toLocaleString()
+    : null,
+});
 
-  // ✅ CREATE CHILD
+export const childController = {
+  // CREATE CHILD
   createChild: async (req: any, res: any) => {
     try {
       const {
@@ -18,19 +27,22 @@ export const childController = {
         signedIn,
         oneTime,
         records,
-        ministry
+        ministry,
       } = req.body;
 
       if (!firstName || !lastName || !ministry) {
         return res.status(400).json({
           success: false,
-          error: "Missing required fields"
+          error: "Missing required fields",
         });
       }
 
-      console.log("Incoming youth:", req.body);
-
-      const now = new Date().toISOString();
+      if (!["youth", "sundayschool"].includes(ministry)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid ministry",
+        });
+      }
 
       const newChild = new Child({
         firstName,
@@ -40,123 +52,163 @@ export const childController = {
         signedIn: signedIn ?? false,
         oneTime: oneTime ?? false,
         ministry,
-        lastSignedIn: signedIn ? now : null,
-        lastSignedOut: !signedIn ? now : null,
-        records: records || []
+        records: Array.isArray(records) ? records : [],
+        lastSignedIn: null,
+        lastSignedOut: null,
       });
 
       await newChild.save();
 
       res.status(201).json({
         success: true,
-        child: newChild
+        child: newChild,
       });
-
     } catch (error) {
       console.error("Error creating child:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to create child"
+        error: "Failed to create child",
       });
     }
   },
 
-
-  // ✅ GET CHILDREN (FILTER BY MINISTRY)
+  // GET CHILDREN
   getChildren: async (req: any, res: any) => {
     try {
       const { ministry } = req.query;
 
-      const filter = ministry ? { ministry } : {};
+      const filter: any = {};
+      if (ministry && ["youth", "sundayschool"].includes(ministry)) {
+        filter.ministry = ministry;
+      }
 
-      const children = await Child.find(filter)
-        .populate("records");
+      const children = await Child.find(filter).populate("records").lean();
 
-      const formattedChildren = children.map(child => {
-        const obj = child.toObject();
-
-        if (obj.records && Array.isArray(obj.records)) {
-          obj.records = obj.records.map((record: any) => ({
-            ...record,
-            timestamp: record.timestamp
-              ? new Date(record.timestamp).toLocaleString()
-              : null
-          }));
+      const formattedChildren = children.map((child: any) => {
+        if (Array.isArray(child.records)) {
+          child.records = child.records.map(formatLogRecord);
         }
-
-        return obj;
+        return child;
       });
 
       res.status(200).json({
         success: true,
-        children: formattedChildren
+        children: formattedChildren,
       });
-
     } catch (error) {
       console.error("Error retrieving children:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to retrieve children"
+        error: "Failed to retrieve children",
       });
     }
   },
 
+  // GET SINGLE CHILD
+  getChildById: async (req: any, res: any) => {
+    try {
+      const { _id } = req.params;
 
-  // ✅ EDIT CHILD
+      const child = await Child.findById(_id).populate("records").lean();
+
+      if (!child) {
+        return res.status(404).json({
+          success: false,
+          error: "Child not found",
+        });
+      }
+
+      const childObj: any = child;
+
+      if (Array.isArray(childObj.records)) {
+        childObj.records = childObj.records.map(formatLogRecord);
+      }
+
+      res.status(200).json({
+        success: true,
+        child: childObj,
+      });
+    } catch (error) {
+      console.error("Error retrieving child:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to retrieve child",
+      });
+    }
+  },
+
+  // EDIT CHILD
   editChild: async (req: any, res: any) => {
     try {
       const { _id } = req.params;
       const updates = req.body;
 
-      const now = new Date().toISOString();
+      const updateQuery: any = {};
 
-      // Handle sign in/out timestamps
+      if ("firstName" in updates) updateQuery.firstName = updates.firstName;
+      if ("lastName" in updates) updateQuery.lastName = updates.lastName;
+      if ("age" in updates) updateQuery.age = updates.age;
+      if ("cell" in updates) updateQuery.cell = updates.cell;
+      if ("oneTime" in updates) updateQuery.oneTime = updates.oneTime;
+
+      if (
+        "ministry" in updates &&
+        ["youth", "sundayschool"].includes(updates.ministry)
+      ) {
+        updateQuery.ministry = updates.ministry;
+      }
+
       if ("signedIn" in updates) {
-        if (updates.signedIn) {
-          updates.lastSignedIn = now;
-        } else {
-          updates.lastSignedOut = now;
-        }
+        updateQuery.signedIn = updates.signedIn;
       }
 
-      // Safely add records without duplicates
+      if ("lastSignedIn" in updates) {
+        updateQuery.lastSignedIn = updates.lastSignedIn;
+      }
+
+      if ("lastSignedOut" in updates) {
+        updateQuery.lastSignedOut = updates.lastSignedOut;
+      }
+
       if (updates.records) {
-        await Child.findByIdAndUpdate(
-          _id,
-          { $addToSet: { records: { $each: [].concat(updates.records) } } }
-        );
-        delete updates.records;
+        updateQuery.$push = {
+          records: updates.records,
+        };
       }
 
-      const updatedChild = await Child.findByIdAndUpdate(
-        _id,
-        updates,
-        { new: true }
-      ).populate("records");
+      const updatedChild = await Child.findByIdAndUpdate(_id, updateQuery, {
+        new: true,
+      })
+        .populate("records")
+        .lean();
 
       if (!updatedChild) {
         return res.status(404).json({
           success: false,
-          error: "Child not found"
+          error: "Child not found",
         });
+      }
+
+      const childObj: any = updatedChild;
+
+      if (Array.isArray(childObj.records)) {
+        childObj.records = childObj.records.map(formatLogRecord);
       }
 
       res.status(200).json({
         success: true,
-        child: updatedChild
+        child: childObj,
       });
-
     } catch (error) {
       console.error("Error updating child:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to update child"
+        error: "Failed to update child",
       });
     }
   },
 
-
-  // ✅ DELETE CHILD
+  // DELETE CHILD
   deleteChild: async (req: any, res: any) => {
     try {
       const { _id } = req.params;
@@ -166,24 +218,23 @@ export const childController = {
       if (!deletedChild) {
         return res.status(404).json({
           success: false,
-          error: "Child not found"
+          error: "Child not found",
         });
       }
 
       res.status(200).json({
         success: true,
         message: "Child deleted",
-        _id
+        _id,
       });
-
     } catch (error) {
       console.error("Error deleting child:", error);
       res.status(500).json({
         success: false,
-        error: "Failed to delete child"
+        error: "Failed to delete child",
       });
     }
-  }
+  },
 };
 
 export default childController;

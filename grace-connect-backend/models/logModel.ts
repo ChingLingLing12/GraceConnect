@@ -1,8 +1,19 @@
 import mongoose from "mongoose";
 
-const logSchema = new mongoose.Schema({ 
-    message: String, 
-    timestamp: { type: Date, default: Date.now } 
+const logSchema = new mongoose.Schema({
+  child: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Child", 
+    required: true 
+  },
+  signInTime: { 
+    type: Date, 
+    required: true 
+  },
+  signOutTime: { 
+    type: Date, 
+    default: null 
+  }
 });
 
 export default logSchema;

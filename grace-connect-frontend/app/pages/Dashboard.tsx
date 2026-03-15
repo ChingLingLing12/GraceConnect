@@ -70,18 +70,18 @@ export default function Dashboard({ministry}: Props) {
   };
 
   const editYouth = async (_id: string, updates: Partial<Youth>) => {
-    try {
-      const res = await apiFetch(`${YOUTH_URL}/${_id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error("Network response was not ok");
-      return await res.json();
-    } catch (error) {
-      console.error("Error updating youth:", error);
-    }
-  };
+  try {
+    const data = await apiFetch(`${YOUTH_URL}/${_id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+
+    return data;
+  } catch (error) {
+    console.error("Error updating youth:", error);
+  }
+};
 
   const fetchYouths = async () => {
   try {
@@ -191,20 +191,40 @@ const handleSubmit = async (houseHoldID: string, e: React.FormEvent<HTMLFormElem
   // Sign-In / Sign-Out
   // -----------------------
   const handleSignIn = async (youth: Youth) => {
-    const logId = await createLog({ message: "signIn", timestamp: new Date().toISOString() });
-    setYouths(prev =>
-      prev.map(y => (y === youth ? { ...y, signedIn: true } : y))
-    );
-    await editYouth(youth._id!, { signedIn: true, records: logId });
-  };
 
-  const handleSignOut = async (youth: Youth) => {
-    const logId = await createLog({ message: "signOut", timestamp: new Date().toISOString() });
-    setYouths(prev =>
-      prev.map(y => (y === youth ? { ...y, signedIn: false } : y))
-    );
-    await editYouth(youth._id!, { signedIn: false, records: logId });
-  };
+  const data = await apiFetch("/api/log/signin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ childId: youth._id })
+  });
+
+  const logId = data.log._id;
+
+  setYouths(prev =>
+    prev.map(y => (y._id === youth._id ? { ...y, signedIn: true } : y))
+  );
+
+  await editYouth(youth._id!, {
+    signedIn: true,
+    records: logId
+  });
+
+};
+
+const handleSignOut = async (youth: Youth) => {
+
+  await apiFetch("/api/log/signout", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ childId: youth._id })
+  });
+
+  setYouths(prev =>
+    prev.map(y => (y._id === youth._id ? { ...y, signedIn: false } : y))
+  );
+
+  await editYouth(youth._id!, { signedIn: false });
+};
 
   // -----------------------
   // Filters & Groupings

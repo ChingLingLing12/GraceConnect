@@ -16,6 +16,7 @@ export const apiFetch = async (url: string, options: any = {}) => {
 
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
+    console.error(`API Error: ${res.status} ${errText}`);
     throw new Error(`API Error: ${res.status} ${errText}`);
   }
 

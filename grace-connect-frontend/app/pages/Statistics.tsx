@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
 import {
@@ -14,396 +14,577 @@ import {
   TableRow,
   TableCell,
   Button,
+  Select,
+  SelectItem,
 } from "@heroui/react";
-import { sampleYouth } from "../models";
 import { apiFetch } from "../context/api";
-import { useSearchParams } from "next/dist/client/components/navigation";
 
 type Props = {
   ministry: "youth" | "sundayschool" | null;
 };
 
+type LogRecord = {
+  _id?: string;
+  signInTime?: string | null;
+  signOutTime?: string | null;
+};
+
+type YouthWithLogs = {
+  _id?: string;
+  firstName: string;
+  lastName: string;
+  age?: number;
+  cell?: string;
+  signedIn?: boolean;
+  oneTime?: boolean;
+  ministry?: "youth" | "sundayschool";
+  records?: LogRecord[];
+};
+
+type WeekOption = {
+  value: number;
+  label: string;
+};
+
+type WeeklyRecord = {
+  youth: YouthWithLogs;
+  record: LogRecord;
+  signInDate: Date;
+};
+
+const YOUTH_CELLS = [
+  "Year 12",
+  "Year 11",
+  "Year 10",
+  "Year 9",
+  "Year 8",
+  "Year 7",
+];
+
+const SUNDAY_SCHOOL_CELLS = [
+  "Little Light [Kindy to PP]",
+  "Little Candle [Y1-Y2]",
+  "Lighthouse [Y3-Y4]",
+  "Flame [Y5]",
+  "Torch Bearer [Y6 above]",
+];
+
 export default function Statistics({ ministry }: Props) {
-
-  if (!ministry) return null;
-
-  const CHILD_URL = `/api/${ministry}`;
-
+  const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [youths, setYouths] = useState(sampleYouth);
-  const [filterMode, setFilterMode] = useState<
-    "default" | "signedIn" | "signedOut"
-  >("default");
-
-  const [currentDateTime, setCurrentDateTime] = useState({
-    dateString: "",
-    timeString: "",
-  });
-
-  // Pagination
+  const [youths, setYouths] = useState<YouthWithLogs[]>([]);
+  const [weekOffset, setWeekOffset] = useState(0);
   const [tablePage, setTablePage] = useState(0);
+  const [selectedCells, setSelectedCells] = useState<string[]>([]);
+
   const PAGE_SIZE = 20;
 
-  // Week navigation
-  const [weekOffset, setWeekOffset] = useState(0);
-  const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  /* ===========================
-     CROSS-PLATFORM TIMESTAMP PARSER
-     =========================== */
-  const parseTimestamp = (ts: string) => {
-    if (!ts) return new Date(NaN);
-
-    // Try native parsing first
-    const native = new Date(ts);
-    if (!isNaN(native.getTime())) return native;
-
-    // Fallback for locale strings
-    try {
-      const [datePart, timePartRaw] = ts.split(",");
-      if (!datePart || !timePartRaw) return new Date(NaN);
-
-      const [day, month, year] = datePart.trim().split("/").map(Number);
-
-      const match = timePartRaw
-        .trim()
-        .match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)/i);
-
-      if (!match) return new Date(NaN);
-
-      let [, h, m, s, meridiem] = match;
-      let hours = Number(h);
-      const minutes = Number(m);
-      const seconds = Number(s ?? 0);
-
-      meridiem = meridiem.toLowerCase();
-      if (meridiem === "pm" && hours < 12) hours += 12;
-      if (meridiem === "am" && hours === 12) hours = 0;
-
-      return new Date(year, month - 1, day, hours, minutes, seconds);
-    } catch {
-      return new Date(NaN);
-    }
-  };
-
-  //refetch when switching ministry
   useEffect(() => {
-  if (!ministry) return;
-
-  const fetchChildren = async () => {
-    try {
-      const data = await apiFetch(CHILD_URL);
-
-      if (data.success && Array.isArray(data.children)) {
-        setYouths(data.children);
-      }
-    } catch (error) {
-      console.error("Error fetching children:", error);
-    }
-  };
-
-  fetchChildren();
-}, [ministry]);
-
-useEffect(() => {
-  setTablePage(0);
-  setWeekOffset(0);
-}, [ministry]);
-
-  /* ===========================
-     FETCH YOUTHS
-     =========================== */
-  useEffect(() => {
-    const fetchYouths = async () => {
-      try {
-        const data = await apiFetch(CHILD_URL);
-        if (data.success && Array.isArray(data.children)) {
-          setYouths(data.children);
-        }
-      } catch (error) {
-        console.error("Error fetching youths:", error);
-      }
-    };
-    fetchYouths();
+    setMounted(true);
   }, []);
 
-  /* ===========================
-     CURRENT DATE / TIME
-     =========================== */
+  const isYouth = ministry === "youth";
+  const CHILD_URL = ministry ? `/api/${ministry}` : "";
+
+  const allowedCells = useMemo(
+    () => (isYouth ? YOUTH_CELLS : SUNDAY_SCHOOL_CELLS),
+    [isYouth]
+  );
+
   useEffect(() => {
-    const updateDateTime = () => {
-      const now = new Date();
-      setCurrentDateTime({
-        dateString: now.toLocaleDateString(),
-        timeString: now.toLocaleTimeString(),
-      });
-    };
-    updateDateTime();
-    const interval = setInterval(updateDateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    setSelectedCells(allowedCells);
+  }, [allowedCells, ministry]);
 
-  /* ===========================
-     FILTER YOUTHS
-     =========================== */
-  const filteredYouths = youths.filter((youth) => {
-    const matchesSearch = `${youth.firstName} ${youth.lastName}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return "—";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleString();
+  };
 
-    const matchesSwitch =
-      filterMode === "default"
-        ? true
-        : filterMode === "signedIn"
-        ? youth.signedIn
-        : !youth.signedIn;
+  const parseDate = (value?: string | null) => {
+    if (!value) return null;
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return null;
+    return d;
+  };
 
-    return matchesSearch && matchesSwitch;
-  });
+  const endOfDay = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
 
-  /* ===========================
-     WEEK LABELS
-     =========================== */
-  const getWeekLabels = (offset: number) => {
+  const getWeekRange = (offset: number) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    today.setDate(today.getDate() - offset * 7);
+
+    if (isYouth) {
+      const friday = new Date(today);
+      const day = friday.getDay();
+      let diff = 5 - day;
+      if (day === 6) diff = 6;
+
+      friday.setDate(friday.getDate() + diff - offset * 7);
+
+      const weekEnd = endOfDay(friday);
+      const weekStart = new Date(friday);
+      weekStart.setDate(friday.getDate() - 6);
+      weekStart.setHours(0, 0, 0, 0);
+
+      return { weekStart, weekEnd, labelDate: friday };
+    }
 
     const sunday = new Date(today);
-    sunday.setDate(today.getDate() - today.getDay());
+    const day = sunday.getDay();
+    let diff = (7 - day) % 7;
+    if (day === 0) diff = 0;
 
-    return WEEKDAYS.map((_, i) => {
-      const d = new Date(sunday);
-      d.setDate(sunday.getDate() + i);
-      return `${WEEKDAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
-    });
+    sunday.setDate(sunday.getDate() + diff - offset * 7);
+
+    const weekEnd = endOfDay(sunday);
+    const weekStart = new Date(sunday);
+    weekStart.setDate(sunday.getDate() - 6);
+    weekStart.setHours(0, 0, 0, 0);
+
+    return { weekStart, weekEnd, labelDate: sunday };
   };
 
-  /* ===========================
-     STACKED SIGN-IN DATA
-     =========================== */
-  const getStackedSignInData = (
-    youths: typeof sampleYouth,
-    offset: number
-  ) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    today.setDate(today.getDate() - offset * 7);
+  const getWeekLabel = (offset: number) => {
+    const { labelDate, weekStart, weekEnd } = getWeekRange(offset);
 
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
+    const label = labelDate.toLocaleDateString(undefined, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
+    const rangeStart = weekStart.toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+    });
 
-    const classCounts: Record<string, number[]> = {};
+    const rangeEnd = weekEnd.toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+    });
 
-    youths.forEach((youth) => {
-      const className = youth.cell ?? "Unassigned";
-      if (!classCounts[className]) {
-        classCounts[className] = Array(7).fill(0);
-      }
+    return `${label} (${rangeStart} - ${rangeEnd})`;
+  };
 
-      youth.records?.forEach((record) => {
-        if (record.message?.toLowerCase() !== "signin") return;
+  const getAllLogs = (children: YouthWithLogs[]) => {
+    return children.flatMap((youth) =>
+      (youth.records ?? [])
+        .filter((record) => record?.signInTime)
+        .map((record) => {
+          const signInDate = parseDate(record.signInTime);
+          if (!signInDate) return null;
+          return { youth, record, signInDate };
+        })
+        .filter(Boolean) as WeeklyRecord[]
+    );
+  };
 
-        const recordDate = parseTimestamp(record.timestamp);
-        if (isNaN(recordDate.getTime())) return;
+  const getMaxWeekOffset = (children: YouthWithLogs[]) => {
+    const allLogs = getAllLogs(children);
+    if (allLogs.length === 0) return 0;
 
-        if (recordDate >= startOfWeek && recordDate <= endOfWeek) {
-          classCounts[className][recordDate.getDay()]++;
+    const oldest = allLogs.reduce(
+      (min, item) => (item.signInDate < min ? item.signInDate : min),
+      allLogs[0].signInDate
+    );
+
+    let offset = 0;
+    while (true) {
+      const { weekStart } = getWeekRange(offset);
+      if (weekStart <= oldest) return offset;
+      offset++;
+      if (offset > 520) return offset;
+    }
+  };
+
+  useEffect(() => {
+    if (!ministry) return;
+
+    const fetchChildren = async () => {
+      try {
+        const data = await apiFetch(`${CHILD_URL}?ministry=${ministry}`);
+
+        if (data?.success && Array.isArray(data.children)) {
+          const ministryChildren = data.children.filter(
+            (child: YouthWithLogs) => child.ministry === ministry
+          );
+          setYouths(ministryChildren);
+        } else {
+          setYouths([]);
         }
+      } catch (error) {
+        console.error("Error fetching children:", error);
+        setYouths([]);
+      }
+    };
+
+    fetchChildren();
+  }, [CHILD_URL, ministry]);
+
+  useEffect(() => {
+    setWeekOffset(0);
+    setTablePage(0);
+    setSearchTerm("");
+  }, [ministry]);
+
+  useEffect(() => {
+    setTablePage(0);
+  }, [searchTerm, weekOffset, selectedCells]);
+
+  const ministryYouths = useMemo(() => {
+    if (!ministry) return [];
+    return youths.filter((youth) => youth.ministry === ministry);
+  }, [youths, ministry]);
+
+  const maxWeekOffset = useMemo(
+    () => getMaxWeekOffset(ministryYouths),
+    [ministryYouths, isYouth]
+  );
+
+  useEffect(() => {
+    if (weekOffset > maxWeekOffset) {
+      setWeekOffset(maxWeekOffset);
+    }
+  }, [weekOffset, maxWeekOffset]);
+
+  const weekOptions: WeekOption[] = useMemo(() => {
+    const options: WeekOption[] = [];
+    for (let i = 0; i <= maxWeekOffset; i++) {
+      options.push({
+        value: i,
+        label: i === 0 ? `Current Week - ${getWeekLabel(i)}` : getWeekLabel(i),
       });
+    }
+    return options;
+  }, [maxWeekOffset, isYouth]);
+
+  const { weekStart, weekEnd, labelDate } = useMemo(
+    () => getWeekRange(weekOffset),
+    [weekOffset, isYouth]
+  );
+
+  const filteredYouths = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim();
+
+    return ministryYouths.filter((youth) => {
+      const fullName = `${youth.firstName ?? ""} ${youth.lastName ?? ""}`.toLowerCase();
+      const cell = youth.cell ?? "";
+
+      if (!allowedCells.includes(cell)) return false;
+      if (!selectedCells.includes(cell)) return false;
+      if (!term) return true;
+
+      return fullName.includes(term) || cell.toLowerCase().includes(term);
+    });
+  }, [ministryYouths, searchTerm, allowedCells, selectedCells]);
+
+  const weeklyRecords = useMemo(() => {
+    return filteredYouths
+      .flatMap((youth) =>
+        (youth.records ?? [])
+          .filter((record) => record?.signInTime)
+          .map((record) => {
+            const signInDate = parseDate(record.signInTime);
+            if (!signInDate) return null;
+
+            return {
+              youth,
+              record,
+              signInDate,
+            };
+          })
+          .filter(Boolean) as WeeklyRecord[]
+      )
+      .filter(({ signInDate }) => signInDate >= weekStart && signInDate <= weekEnd)
+      .sort((a, b) => b.signInDate.getTime() - a.signInDate.getTime());
+  }, [filteredYouths, weekStart, weekEnd]);
+
+  const totalAttendance = weeklyRecords.length;
+
+  const chartLabels = selectedCells;
+
+  const chartValues = useMemo(() => {
+    const counts: Record<string, number> = {};
+    selectedCells.forEach((cell) => {
+      counts[cell] = 0;
     });
 
-    return classCounts;
+    weeklyRecords.forEach(({ youth }) => {
+      const cellName = youth.cell?.trim() || "Unassigned";
+      if (cellName in counts) {
+        counts[cellName] += 1;
+      }
+    });
+
+    return selectedCells.map((cell) => counts[cell] || 0);
+  }, [weeklyRecords, selectedCells]);
+
+  const toggleCell = (cell: string) => {
+    setSelectedCells((prev) =>
+      prev.includes(cell) ? prev.filter((c) => c !== cell) : [...prev, cell]
+    );
   };
 
-  /* ===========================
-     MEMOIZED CHART DATA
-     =========================== */
-  const stackedData = useMemo(
-    () => getStackedSignInData(youths, weekOffset),
-    [youths, weekOffset]
-  );
+  const selectAllCells = () => setSelectedCells(allowedCells);
+  const clearAllCells = () => setSelectedCells([]);
 
-  const labels = useMemo(
-    () => getWeekLabels(weekOffset),
-    [weekOffset]
-  );
+  const barData = {
+    labels: chartLabels,
+    datasets: [
+      {
+        label: "Attendance Count",
+        data: chartValues,
+        backgroundColor: chartLabels.map(
+          (_, index) => `hsl(${(index * 47) % 360}, 70%, 55%)`
+        ),
+        borderRadius: 6,
+      },
+    ],
+  };
 
-  const datasets = Object.entries(stackedData).map(
-    ([className, data], index) => ({
-      label: className,
-      data,
-      backgroundColor: `hsl(${index * 60}, 70%, 55%)`,
-      stack: "signins",
-    })
-  );
-
-  const barData = { labels, datasets };
+  const serviceDateTitle = labelDate.toLocaleDateString(undefined, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   const barOptions = {
     responsive: true,
     plugins: {
-      legend: { labels: { color: "#e5e7eb" } },
+      legend: {
+        labels: {
+          color: "#e5e7eb",
+        },
+      },
       title: {
         display: true,
-        text: "Weekly Sign-Ins by Class",
+        text: `${isYouth ? "Youth" : "Sunday School"} Attendance by Cell - ${serviceDateTitle}`,
         color: "#e5e7eb",
       },
     },
     scales: {
       x: {
-        stacked: true,
-        ticks: { color: "#e5e7eb" },
+        ticks: {
+          color: "#e5e7eb",
+          maxRotation: 35,
+          minRotation: 35,
+        },
         grid: { color: "#374151" },
       },
       y: {
-        stacked: true,
         beginAtZero: true,
-        ticks: { color: "#e5e7eb" },
+        ticks: {
+          color: "#e5e7eb",
+          precision: 0,
+        },
         grid: { color: "#374151" },
       },
     },
   };
 
-  /* ===========================
-     TABLE DATA
-     =========================== */
-  const allRecords = filteredYouths
-    .flatMap((youth) =>
-      youth.records?.map((r) => ({ youth, record: r })) ?? []
-    )
-    .sort((a, b) => {
-      const ta = parseTimestamp(a.record.timestamp).getTime();
-      const tb = parseTimestamp(b.record.timestamp).getTime();
-      return tb - ta; // newest first
-  });
-
-
-  const paginatedRecords = allRecords.slice(
+  const paginatedRecords = weeklyRecords.slice(
     tablePage * PAGE_SIZE,
     (tablePage + 1) * PAGE_SIZE
   );
 
-  /* ===========================
-     RENDER
-     =========================== */
+  const totalPages = Math.max(1, Math.ceil(weeklyRecords.length / PAGE_SIZE));
+
+  if (!mounted || !ministry) return null;
+
   return (
     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
       <div className="w-full max-w-6xl mx-auto px-4">
-        <h3 className="text-2xl font-semibold mb-6 text-center">
-          {ministry === "youth"
-            ? "Youth Check-In Statistics"
-            : "Sunday School Check-In Statistics"}
+        <h3 className="text-2xl font-semibold mb-2 text-center">
+          {isYouth ? "Youth Check-In Statistics" : "Sunday School Check-In Statistics"}
         </h3>
 
-        <h3 className="mb-8 text-center text-gray-400">
-          {currentDateTime.dateString} | {currentDateTime.timeString}
-        </h3>
+        <p className="text-center text-gray-400 mb-6">
+          Showing week ending on{" "}
+          <span className="text-gray-200 font-medium">{serviceDateTitle}</span>
+        </p>
 
-        <Input
-          placeholder="Search youth..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="mb-4"
-          isClearable
-          onClear={() => setSearchTerm("")}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <Input
+            placeholder="Search youth or cell..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            isClearable
+            onClear={() => setSearchTerm("")}
+          />
 
-        {/* WEEK NAVIGATION */}
-        <div className="flex justify-between items-center mb-4 max-w-4xl mx-auto">
+          <Select
+            label="Select Week"
+            selectedKeys={[String(weekOffset)]}
+            onSelectionChange={(keys) => {
+              const value = Array.from(keys)[0];
+              if (value !== undefined) {
+                setWeekOffset(Number(value));
+              }
+            }}
+            className="text-white"
+          >
+            {weekOptions.map((week) => (
+              <SelectItem key={String(week.value)}>
+                {week.label}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex justify-between items-center mb-6 max-w-4xl mx-auto gap-3">
           <Button
-            onPress={() => setWeekOffset((prev) => prev + 1)}
+            onPress={() => setWeekOffset((prev) => Math.min(prev + 1, maxWeekOffset))}
             className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
+            isDisabled={weekOffset >= maxWeekOffset}
           >
             ← Previous Week
           </Button>
 
-          <span className="text-gray-300 font-medium">
-            {weekOffset === 0 ? "Current Week" : `Week -${weekOffset}`}
-          </span>
+          <div className="text-center text-gray-300 font-medium">
+            {weekOffset === 0 ? "Current Week" : `${weekOffset} week${weekOffset > 1 ? "s" : ""} ago`}
+          </div>
 
           <Button
             onPress={() => setWeekOffset((prev) => Math.max(prev - 1, 0))}
             className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
-            disabled={weekOffset === 0}
+            isDisabled={weekOffset === 0}
           >
             Next Week →
           </Button>
         </div>
 
-        {/* BAR CHART */}
-        <Card className="mb-8 bg-zinc-900">
+        <Card className="mb-4 bg-zinc-900 border border-zinc-800">
           <CardBody>
-            <Bar data={barData} options={barOptions} />
+            <div className="text-center">
+              <div className="text-sm text-gray-400 mb-1">Total Attendance</div>
+              <div className="text-3xl font-bold text-white">{totalAttendance}</div>
+            </div>
           </CardBody>
         </Card>
 
-        {/* TABLE */}
-        <Table aria-label="records table" className="w-full min-w-[1000px] mb-4">
-          <TableHeader>
-            <TableColumn>Temporary</TableColumn>
-            <TableColumn>First Name</TableColumn>
-            <TableColumn>Last Name</TableColumn>
-            <TableColumn>Cell</TableColumn>
-            <TableColumn>Action</TableColumn>
-            <TableColumn>Time</TableColumn>
-          </TableHeader>
+        <Card className="mb-4 bg-zinc-900 border border-zinc-800">
+          <CardBody>
+            <div className="flex flex-wrap gap-2 mb-3">
+              <Button size="sm" onPress={selectAllCells}>
+                Select All
+              </Button>
+              <Button size="sm" onPress={clearAllCells}>
+                Clear All
+              </Button>
+            </div>
 
-          <TableBody>
-            {paginatedRecords.length > 0 ? (
-              paginatedRecords.map(({ youth, record }, idx) => (
-                <TableRow
-                  key={youth._id + "-" + idx}
-                  className={
-                    record.message?.toLowerCase() === "signin"
-                      ? "bg-blue-500 text-black"
-                      : ""
-                  }
-                >
-                  <TableCell
-                    className={youth.oneTime ? "text-yellow-400" : ""}
+            <div className="flex flex-wrap gap-2">
+              {allowedCells.map((cell) => {
+                const active = selectedCells.includes(cell);
+                return (
+                  <button
+                    key={cell}
+                    type="button"
+                    onClick={() => toggleCell(cell)}
+                    className={`px-3 py-2 rounded-lg border text-sm transition ${
+                      active
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-zinc-800 border-zinc-700 text-gray-300 hover:bg-zinc-700"
+                    }`}
                   >
-                    {youth.oneTime ? "🟨" : ""}
-                  </TableCell>
-                  <TableCell>{youth.firstName}</TableCell>
-                  <TableCell>{youth.lastName}</TableCell>
-                  <TableCell>{youth.cell}</TableCell>
-                  <TableCell>{record.message}</TableCell>
-                  <TableCell>{record.timestamp}</TableCell>
-                </TableRow>
-              ))
+                    {cell}
+                  </button>
+                );
+              })}
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="mb-8 bg-zinc-900 border border-zinc-800">
+          <CardBody>
+            {chartLabels.length > 0 ? (
+              <Bar data={barData} options={barOptions} />
             ) : (
-              <TableRow>
-                <TableCell colSpan={6}>No youths found</TableCell>
-              </TableRow>
+              <div className="text-center text-gray-400 py-10">
+                No cells selected.
+              </div>
             )}
-          </TableBody>
-        </Table>
+          </CardBody>
+        </Card>
 
-        {/* PAGINATION */}
-        <div className="flex justify-center gap-4 mt-2">
-          <Button
-            onPress={() => setTablePage((p) => Math.max(p - 1, 0))}
-            disabled={tablePage === 0}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <Table
+            aria-label="weekly attendance records"
+            className="w-full"
+            classNames={{
+              wrapper: "bg-zinc-900 shadow-none rounded-none",
+              th: "bg-zinc-800 text-gray-200",
+              td: "text-gray-100",
+              tr: "border-b border-zinc-800",
+            }}
           >
-            Previous
-          </Button>
+            <TableHeader>
+              <TableColumn>YOUTH NAME</TableColumn>
+              <TableColumn>CELL</TableColumn>
+              <TableColumn>SIGN IN TIME</TableColumn>
+              <TableColumn>SIGN OUT TIME</TableColumn>
+            </TableHeader>
 
-          <Button
-            onPress={() =>
-              setTablePage((p) =>
-                (p + 1) * PAGE_SIZE < allRecords.length ? p + 1 : p
-              )
-            }
-            disabled={(tablePage + 1) * PAGE_SIZE >= allRecords.length}
-          >
-            Next
-          </Button>
+            <TableBody>
+              {paginatedRecords.length > 0 ? (
+                paginatedRecords.map(({ youth, record }, idx) => (
+                  <TableRow key={`${youth._id ?? idx}-${record._id ?? idx}`}>
+                    <TableCell>
+                      {youth.firstName} {youth.lastName}
+                    </TableCell>
+                    <TableCell>{youth.cell || "Unassigned"}</TableCell>
+                    <TableCell>{formatDateTime(record.signInTime)}</TableCell>
+                    <TableCell>{record.signOutTime ? formatDateTime(record.signOutTime) : "—"}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow key="no-records">
+                  <TableCell>No records found</TableCell>
+                  <TableCell>—</TableCell>
+                  <TableCell>—</TableCell>
+                  <TableCell>—</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-400">
+            {weeklyRecords.length} record{weeklyRecords.length !== 1 ? "s" : ""}
+          </div>
+
+          <div className="flex justify-center gap-4">
+            <Button
+              onPress={() => setTablePage((p) => Math.max(p - 1, 0))}
+              isDisabled={tablePage === 0}
+            >
+              Previous
+            </Button>
+
+            <div className="flex items-center text-gray-300 text-sm">
+              Page {tablePage + 1} / {totalPages}
+            </div>
+
+            <Button
+              onPress={() =>
+                setTablePage((p) =>
+                  (p + 1) * PAGE_SIZE < weeklyRecords.length ? p + 1 : p
+                )
+              }
+              isDisabled={(tablePage + 1) * PAGE_SIZE >= weeklyRecords.length}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </main>

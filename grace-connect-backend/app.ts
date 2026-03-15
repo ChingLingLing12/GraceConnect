@@ -37,7 +37,6 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/graceconnec
 app.use("/api/auth", authRoutes);
 app.post('/api/sundayschool', childController.createChild);
 app.get ('/api/log', logController.getLogs);
-app.post('/api/log', logController.createLog);
 app.post('/api/youth', childController.createChild);
 app.put('/api/sundayschool/:_id', childController.editChild);
 app.put('/api/youth/:_id', childController.editChild);
@@ -47,10 +46,14 @@ app.put('/api/household/:_id', houseHoldController.editHouseHold);
 
 app.use(protect); // everything below requires login
 
+app.post("/api/log/signin", logController.signIn);
+app.put("/api/log/signout", logController.signOut);
 app.get('/api/youth', childController.getChildren);
 app.get('/api/sundayschool', childController.getChildren);
 app.delete('/api/youth/:_id', childController.deleteChild);
 app.delete('/api/sundayschool/:_id', childController.deleteChild);
+app.get("/api/youth/:_id", childController.getChildById);
+app.get("/api/sundayschool/:_id", childController.getChildById);
 
 app.get('/api/youth/household', houseHoldController.getHouseHolds);
 app.get('/api/sundayschool/household', houseHoldController.getHouseHolds);
