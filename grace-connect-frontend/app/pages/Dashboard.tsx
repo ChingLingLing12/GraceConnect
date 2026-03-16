@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input, Button, Card, CardBody, CardHeader, Select, SelectItem, Switch } from "@heroui/react";
+import { Input, Button } from "@heroui/react";
 import { HouseHold, Youth, sampleYouth } from "../models";
 import Allview from "../components/Views/AllView";
 import Cellview from "../components/Views/CellView";
@@ -12,14 +12,10 @@ type Props = {
   ministry: "youth" | "sundayschool" | null;
 };
 
-export default function Dashboard({ministry}: Props) {
-    
-  if (!ministry) return null;
-
-  const BASE_MINISTRY_URL = `/api/${ministry}`;
+export default function Dashboard({ ministry }: Props) {
+  const BASE_MINISTRY_URL = ministry ? `/api/${ministry}` : "";
   const YOUTH_URL = BASE_MINISTRY_URL;
   const HOUSEHOLD_URL = `${BASE_MINISTRY_URL}/household`;
-  const LOG_URL = `/api/log`;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [youths, setYouths] = useState<Youth[]>(sampleYouth);
@@ -28,309 +24,294 @@ export default function Dashboard({ministry}: Props) {
     { firstName: "", lastName: "", age: 0, signedIn: false },
   ]);
   const [editMode, setEditMode] = useState(false);
-  const [selected, setSelected] = useState<HouseHold | Youth | null>(null);
   const [selectedHousehold, setSelectedHousehold] = useState<string | null>(null);
-  const [filterMode, setFilterMode] = useState<"default" | "signedIn" | "signedOut">("default");
-  const [viewMode, setViewMode] = useState<"default" | "cell" | "houseHold">("default");
-
-  // -----------------------
-  // Backend API Calls
-  // -----------------------
-
-  const createLog = async (logEntry: { message: "signIn" | "signOut"; timestamp: string }) => {
-    try {
-      const res = await apiFetch(LOG_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(logEntry),
-      });
-      if (!res.ok) throw new Error("Network response was not ok");
-      const data = await res.json();
-      return data.log._id;
-    } catch (error) {
-      console.error("Error creating log:", error);
-    }
-  };
-
-  const createYouth = async (youth: Omit<Youth, "_id">): Promise<string> => {
-    try {
-      // Don't send _id for creation
-      const response = await apiFetch(YOUTH_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(youth),
-      });
-      if (!response.ok) throw new Error("Failed to create youth");
-      const data = await response.json();
-      return data.child._id;
-    } catch (error) {
-      console.error("Error creating youth:", error);
-      throw error;
-    }
-  };
-
-  const editYouth = async (_id: string, updates: Partial<Youth>) => {
-  try {
-    const data = await apiFetch(`${YOUTH_URL}/${_id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
-    });
-
-    return data;
-  } catch (error) {
-    console.error("Error updating youth:", error);
-  }
-};
+  const [viewMode, setViewMode] = useState<"default" | "cell" | "houseHold">(
+    "default"
+  );
+  const [filterMode, setFilterMode] = useState<
+    "default" | "signedIn" | "signedOut"
+  >("default");
 
   const fetchYouths = async () => {
-  try {
-    const data = await apiFetch(YOUTH_URL);
-    console.log("API youth response:", data);
-    let children: Youth[] = [];
-
-    if (data.success && Array.isArray(data.children)) {
-      // Filter by ministry
-      children = data.children.filter((child: Youth) => {
-        if (ministry === "youth") return child.ministry === "youth";
-        if (ministry === "sundayschool") return child.ministry === "sundayschool";
-        return false;
-      });
+    if (!ministry) {
+      setYouths([]);
+      return;
     }
 
-    setYouths(children);
-  } catch (error) {
-    console.error("Error fetching youths:", error);
-    setYouths([]);
-  }
-};
+    try {
+      const data = await apiFetch(YOUTH_URL);
+
+      const children: Youth[] =
+        data.success && Array.isArray(data.children)
+          ? data.children.filter((child: Youth) => child.ministry === ministry)
+          : [];
+
+      setYouths(children);
+    } catch (error) {
+      console.error("Error fetching youths:", error);
+      setYouths([]);
+    }
+  };
 
   const fetchHouseholds = async () => {
-  try {
-    const data = await apiFetch(`${HOUSEHOLD_URL}?ministry=${ministry}`);
-    console.log("API household response:", data);
+    if (!ministry) {
+      setHouseholds([]);
+      return;
+    }
 
-    setHouseholds(Array.isArray(data) ? data : data.households || []);
-  } catch (error) {
-    console.error("Error fetching households:", error);
-    setHouseholds([]);
-  }
-};
+    try {
+      const data = await apiFetch(`${HOUSEHOLD_URL}?ministry=${ministry}`);
+      setHouseholds(Array.isArray(data) ? data : data.households || []);
+    } catch (error) {
+      console.error("Error fetching households:", error);
+      setHouseholds([]);
+    }
+  };
+
+  const createYouth = async (youth: Omit<Youth, "_id">) => {
+    const data = await apiFetch(YOUTH_URL, {
+      method: "POST",
+      body: JSON.stringify(youth),
+    });
+
+    if (!data.success) throw new Error("Failed to create youth");
+
+    return data.child._id;
+  };
+
   const editHousehold = async (_id: string, updates: Partial<HouseHold>) => {
     try {
-      const data = await apiFetch(`${HOUSEHOLD_URL}/${_id}`, {
+      await apiFetch(`${HOUSEHOLD_URL}/${_id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
-      return await data;
     } catch (error) {
       console.error("Error updating household:", error);
     }
   };
 
-  // -----------------------
-  // Form Handlers
-  // -----------------------
+  const handleSignIn = async (youth: Youth) => {
+    if (!youth._id) return;
 
-  const addYouth = () => {
-    setNewYouths(prev => [...prev, { firstName: "", lastName: "", age: 0, signedIn: false }]);
+    try {
+      const data = await apiFetch("/api/log/signin", {
+        method: "POST",
+        body: JSON.stringify({ childId: youth._id }),
+      });
+
+      if (!data.success) throw new Error(data.error || "Failed to sign in");
+
+      setYouths((prev) =>
+        prev.map((y) =>
+          y._id === youth._id ? { ...y, signedIn: true } : y
+        )
+      );
+
+      await fetchYouths();
+    } catch (error) {
+      console.error("Error signing in:", error);
+      alert("Failed to sign in");
+    }
   };
 
-  const updateYouth = <K extends keyof Omit<Youth, "_id">>(index: number, field: K, value: any) => {
-    setNewYouths(prev => {
+  const handleSignOut = async (youth: Youth) => {
+    if (!youth._id) return;
+
+    try {
+      const data = await apiFetch("/api/log/signout", {
+        method: "PUT",
+        body: JSON.stringify({ childId: youth._id }),
+      });
+
+      if (!data.success) throw new Error(data.error || "Failed to sign out");
+
+      setYouths((prev) =>
+        prev.map((y) =>
+          y._id === youth._id ? { ...y, signedIn: false } : y
+        )
+      );
+
+      await fetchYouths();
+    } catch (error) {
+      console.error("Error signing out:", error);
+      alert(error instanceof Error ? error.message : "Failed to sign out");
+    }
+  };
+
+  const handleSubmit = async (
+    houseHoldID: string,
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+
+    try {
+      const createdYouths: Youth[] = [];
+
+      for (const youth of newYouths) {
+        const childId = await createYouth(youth);
+        const data = await apiFetch(`${YOUTH_URL}/${childId}`);
+        createdYouths.push(data.child);
+      }
+
+      await editHousehold(houseHoldID, { children: createdYouths });
+
+      alert("Registration completed successfully!");
+      setNewYouths([{ firstName: "", lastName: "", age: 0, signedIn: false }]);
+      setSelectedHousehold(null);
+
+      await fetchYouths();
+      await fetchHouseholds();
+    } catch (error) {
+      console.error(error);
+      alert("Registration failed.");
+    }
+  };
+
+  const addYouth = () => {
+    setNewYouths((prev) => [
+      ...prev,
+      { firstName: "", lastName: "", age: 0, signedIn: false },
+    ]);
+  };
+
+  const updateYouth = <K extends keyof Omit<Youth, "_id">>(
+    index: number,
+    field: K,
+    value: Omit<Youth, "_id">[K]
+  ) => {
+    setNewYouths((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
       return copy;
     });
   };
 
-  const removeYouth = async (youthId: string) => {
-    try {
-      const res = await apiFetch(`${YOUTH_URL}/${youthId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete youth");
-      setNewYouths(prev => prev.filter(y => (y as any)._id !== youthId));
-      await fetchYouths();
-    } catch (error) {
-      console.error(error);
-    }
+  const removeYouth = (indexOrId: number | string) => {
+    setNewYouths((prev) =>
+      prev.filter((y, i) =>
+        typeof indexOrId === "number"
+          ? i !== indexOrId
+          : (y as Youth & { _id?: string })._id !== indexOrId
+      )
+    );
   };
 
-const handleSubmit = async (houseHoldID: string, e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  try {
-    const createdYouths: Youth[] = [];
-    for (const youth of newYouths) {
-      const childId = await createYouth(youth);
-      // Fetch the created youth object by ID (implement fetchYouthById if needed)
-      const res = await apiFetch(`${YOUTH_URL}/${childId}`);
-      const data = await res.json();
-      createdYouths.push(data.child);
-    }
-    await editHousehold(houseHoldID, { children: createdYouths });
-    alert("Registration completed successfully!");
-    setNewYouths([{ firstName: "", lastName: "", age: 0, signedIn: false }]);
-    await fetchYouths();
-    await fetchHouseholds();
-    setSelectedHousehold(null);
-  } catch (error) {
-    console.error(error);
-    alert("Registration failed.");
-  }
-};
+  const openEditHousehold = (houseHold: HouseHold) => {
+    setSelectedHousehold(houseHold._id || null);
+    setEditMode(true);
+    setNewYouths(
+      houseHold.children?.map((c) => ({
+        ...c,
+        signedIn: c.signedIn || false,
+      })) || []
+    );
+  };
 
   useEffect(() => {
+    if (!ministry) return;
+
     fetchYouths();
     fetchHouseholds();
-    setSearchTerm("");
-    setSelected(null);
-    setSelectedHousehold(null);
   }, [ministry]);
 
-  // -----------------------
-  // Sign-In / Sign-Out
-  // -----------------------
-  const handleSignIn = async (youth: Youth) => {
+  const filteredYouths = youths.filter((y) => {
+    const matchesSearch = `${y.firstName} ${y.lastName}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
-  const data = await apiFetch("/api/log/signin", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ childId: youth._id })
-  });
-
-  const logId = data.log._id;
-
-  setYouths(prev =>
-    prev.map(y => (y._id === youth._id ? { ...y, signedIn: true } : y))
-  );
-
-  await editYouth(youth._id!, {
-    signedIn: true,
-    records: logId
-  });
-
-};
-
-const handleSignOut = async (youth: Youth) => {
-
-  await apiFetch("/api/log/signout", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ childId: youth._id })
-  });
-
-  setYouths(prev =>
-    prev.map(y => (y._id === youth._id ? { ...y, signedIn: false } : y))
-  );
-
-  await editYouth(youth._id!, { signedIn: false });
-};
-
-  // -----------------------
-  // Filters & Groupings
-  // -----------------------
-
-  const filteredYouths = youths.filter(y => {
-    const matchesSearch = `${y.firstName} ${y.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter =
-      filterMode === "default" ? true : filterMode === "signedIn" ? y.signedIn : !y.signedIn;
-    return matchesSearch && matchesFilter;
+      filterMode === "default"
+        ? true
+        : filterMode === "signedIn"
+        ? y.signedIn
+        : !y.signedIn;
+
+    return matchesSearch && matchesFilter && y.ministry === ministry;
   });
 
-  const groupedByCell = Array.from(
-    new Set(filteredYouths.map(y => y.cell))
-  ).map(cellName => ({
-    cell: cellName,
-    youths: filteredYouths.filter(y => y.cell === cellName),
-  }));
+  const groupedByCell = Array.from(new Set(filteredYouths.map((y) => y.cell))).map(
+    (cellName) => ({
+      cell: cellName,
+      youths: filteredYouths.filter((y) => y.cell === cellName),
+    })
+  );
 
-  const groupedByHouseHold = households.map(h => ({
-    houseHold: h,
-    youths: filteredYouths.filter(y => h.children?.map(c => c._id).includes(y._id)),
-  }));
+  const groupedByHouseHold = households
+    .filter((h) => h.ministry === ministry)
+    .map((h) => ({
+      houseHold: h,
+      youths: filteredYouths.filter(
+        (y) =>
+          y.ministry === ministry &&
+          h.children?.some((c) => c._id === y._id)
+      ),
+    }))
+    .filter((group) => group.youths.length > 0);
 
-  // -----------------------
-  // Render
-  // -----------------------
+  if (!ministry) return null;
 
   return (
     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
       <div className="w-full max-w-6xl mx-auto px-4">
+
         <h3 className="text-2xl font-semibold mb-6 text-center">
-          Grace Connect {ministry === "youth" ? "Youth" : "Sunday School"} Check-In System
+          Grace Connect {ministry === "youth" ? "Youth" : "Sunday School"} Dashboard
         </h3>
 
-       {/* Search Bar */}
-<Input
-  placeholder="Search youth..."
-  value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
-  className="mb-4"
-  isClearable
-  onClear={() => setSearchTerm("")}
-/>
+        <Input
+          placeholder="Search youth..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="mb-4"
+          isClearable
+          onClear={() => setSearchTerm("")}
+        />
 
-{/* View Mode Buttons */}
-<div className="flex justify-center gap-2 mb-4">
-  <Button variant={viewMode === "default" ? "solid" : "flat"} onPress={() => setViewMode("default")}>Default View</Button>
-  <Button variant={viewMode === "cell" ? "solid" : "flat"} onPress={() => setViewMode("cell")}>Cell View</Button>
-  <Button variant={viewMode === "houseHold" ? "solid" : "flat"} onPress={() => setViewMode("houseHold")}>Household View</Button>
-</div>
+        <div className="flex justify-center gap-2 mb-4">
+          <Button variant={viewMode === "default" ? "solid" : "flat"} onPress={() => setViewMode("default")}>Default</Button>
+          <Button variant={viewMode === "cell" ? "solid" : "flat"} onPress={() => setViewMode("cell")}>Cell</Button>
+          <Button variant={viewMode === "houseHold" ? "solid" : "flat"} onPress={() => setViewMode("houseHold")}>Household</Button>
+        </div>
 
-{/* Filter Switch */}
-<div className="flex border border-gray-900 rounded overflow-hidden mb-4">
-  {["default", "signedIn", "signedOut"].map(mode => (
-    <button
-      key={mode}
-      className={`flex-1 py-2 text-center font-medium
-        ${filterMode === mode ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"}
-        hover:bg-blue-500 hover:text-white transition-colors`}
-      onClick={() => setFilterMode(mode as "default" | "signedIn" | "signedOut")}
-    >
-      {mode === "default" ? "All" : mode === "signedIn" ? "Sign Out Mode" : "Sign In Mode"}
-    </button>
-  ))}
-</div>
+        {viewMode === "default" && (
+          <Allview
+            filteredYouths={filteredYouths}
+            handleSignIn={handleSignIn}
+            handleSignOut={handleSignOut}
+            editMode={editMode}
+            setSelected={() => {}}
+            removeYouth={removeYouth}
+          />
+        )}
 
-{/* Render views based on viewMode */}
-{viewMode === "default" ? (
-  <Allview
-    filteredYouths={filteredYouths}
-    handleSignIn={handleSignIn}
-    handleSignOut={handleSignOut}
-    editMode={editMode}
-    setSelected={setSelected}
-    removeYouth={removeYouth}
-  />
-) : viewMode === "cell" ? (
-  <Cellview
-    groupedByCell={groupedByCell}
-    handleSignIn={handleSignIn}
-    handleSignOut={handleSignOut}
-    editMode={editMode}
-    setSelected={setSelected}
-    removeYouth={removeYouth}
-  />
-) : viewMode === "houseHold" ? (
-  <HouseHoldView
-    groupedByHouseHold={groupedByHouseHold}
-    handleSignIn={handleSignIn}
-    handleSignOut={handleSignOut}
-    selectedHousehold={selectedHousehold}
-    newYouths={newYouths}
-    updateYouth={updateYouth}
-    openEditCard={(id: string) => setSelectedHousehold(selectedHousehold === id ? null : id)}
-    handleSubmit={handleSubmit}
-    addYouth={addYouth}
-    editMode={editMode}
-    setSelected={setSelected}
-    removeYouth={removeYouth}
-    removeHouseHold={async (id: string) => {
-      await fetch(`${HOUSEHOLD_URL}/${id}`, { method: "DELETE" });
-      await fetchHouseholds();
-    }}
-  />
-) : null}
+        {viewMode === "cell" && (
+          <Cellview
+            groupedByCell={groupedByCell}
+            handleSignIn={handleSignIn}
+            handleSignOut={handleSignOut}
+            editMode={editMode}
+            setSelected={() => {}}
+            removeYouth={removeYouth}
+          />
+        )}
+
+        {viewMode === "houseHold" && (
+          <HouseHoldView
+            groupedByHouseHold={groupedByHouseHold}
+            selectedHousehold={selectedHousehold}
+            openHouseholdEditor={openEditHousehold}
+            handleSubmit={handleSubmit}
+            newYouths={newYouths}
+            updateYouth={updateYouth}
+            addYouth={addYouth}
+            removeYouth={removeYouth}
+            removeHouseHold={async (id: string) => {
+              await apiFetch(`${HOUSEHOLD_URL}/${id}`, { method: "DELETE" });
+              fetchHouseholds();
+            }}
+            editMode={editMode}
+          />
+        )}
 
       </div>
     </main>

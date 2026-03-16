@@ -13,6 +13,7 @@ export const YEAR_GROUPS_SUNDAY_SCHOOL = [
   "Torch Bearer [Y6 above]" ]
 
 export interface HouseHold {
+  _id: string; // MongoDB ID from backend
   guardianFirstName: string;
   guardianLastName: string;
   email: string;

@@ -46,6 +46,10 @@ app.put('/api/household/:_id', houseHoldController.editHouseHold);
 
 app.use(protect); // everything below requires login
 
+app.get('/api/youth/household', houseHoldController.getHouseHolds);
+app.get('/api/sundayschool/household', houseHoldController.getHouseHolds);
+app.delete('/api/household/:_id', houseHoldController.deleteHouseHold);
+
 app.post("/api/log/signin", logController.signIn);
 app.put("/api/log/signout", logController.signOut);
 app.get('/api/youth', childController.getChildren);
@@ -55,9 +59,6 @@ app.delete('/api/sundayschool/:_id', childController.deleteChild);
 app.get("/api/youth/:_id", childController.getChildById);
 app.get("/api/sundayschool/:_id", childController.getChildById);
 
-app.get('/api/youth/household', houseHoldController.getHouseHolds);
-app.get('/api/sundayschool/household', houseHoldController.getHouseHolds);
-app.delete('/api/household/:_id', houseHoldController.deleteHouseHold);
 app.listen(port, () => {
     console.log(`Server listening at ${port}`);
 });

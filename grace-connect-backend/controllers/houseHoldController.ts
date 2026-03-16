@@ -54,15 +54,16 @@ export const houseHoldController = {
   // ✅ GET (FILTER BY MINISTRY)
   getHouseHolds: async (req: any, res: any) => {
     try {
-      const { ministry } = req.query;
+      const ministry = req.query.ministry;
 
-      const filter = ministry ? { ministry } : {};
+      if (!ministry || !["youth", "sundayschool"].includes(ministry)) {
+        return res.status(400).json({ error: "Valid ministry is required" });
+      }
 
-      const houseHolds = await HouseHold.find(filter)
+      const houseHolds = await HouseHold.find({ ministry })
         .populate("children", "firstName lastName age cell signedIn ministry");
 
-      res.status(200).json(houseHolds);
-
+      res.status(200).json({ success: true, houseHolds });
     } catch (error) {
       console.error("Error fetching households:", error);
       res.status(500).json({ error: "Internal server error" });

@@ -25,7 +25,6 @@ const YouthCard: React.FC<YouthCardProps> = ({
 
         {/* LEFT SIDE */}
         <div className="flex flex-row items-center">
-          {youth.oneTime && <p className="text-yellow-400 pr-4">🟨</p>}
 
           <div className="flex flex-col mr-4">
             <p className="font-semibold">
