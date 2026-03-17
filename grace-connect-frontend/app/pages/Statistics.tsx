@@ -17,8 +17,9 @@ import {
   Select,
   SelectItem,
 } from "@heroui/react";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { apiFetch } from "../context/api";
-import { formatPerthTime, formatPerthDate, formatPerthDateTime } from "../utils/date";
+import { formatPerthDate, formatPerthDateTime } from "../utils/date";
 
 type Props = {
   ministry: "youth" | "sundayschool" | null;
@@ -53,6 +54,8 @@ type WeeklyRecord = {
   signInDate: Date;
 };
 
+const PERTH_TZ = "Australia/Perth";
+
 const YOUTH_CELLS = [
   "Year 12",
   "Year 11",
@@ -79,13 +82,12 @@ export default function Statistics({ ministry }: Props) {
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
 
   const PAGE_SIZE = 20;
+  const isYouth = ministry === "youth";
+  const CHILD_URL = ministry ? `/api/${ministry}` : "";
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const isYouth = ministry === "youth";
-  const CHILD_URL = ministry ? `/api/${ministry}` : "";
 
   const allowedCells = useMemo(
     () => (isYouth ? YOUTH_CELLS : SUNDAY_SCHOOL_CELLS),
@@ -96,9 +98,7 @@ export default function Statistics({ ministry }: Props) {
     setSelectedCells(allowedCells);
   }, [allowedCells, ministry]);
 
-  const formatDateTime = (value?: string | null) => {
-    return formatPerthDateTime(value);
-  };
+  const formatDateTime = (value?: string | null) => formatPerthDateTime(value);
 
   const parseDate = (value?: string | null) => {
     if (!value) return null;
@@ -108,58 +108,58 @@ export default function Statistics({ ministry }: Props) {
   };
 
   const getPerthToday = () => {
-  const perthNow = new Date(
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Australia/Perth",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date())
-  );
+    const perthNow = toZonedTime(new Date(), PERTH_TZ);
+    perthNow.setHours(0, 0, 0, 0);
+    return perthNow;
+  };
 
-  perthNow.setHours(0, 0, 0, 0);
-  return perthNow;
-};
+  const endOfDay = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
 
-const endOfDay = (date: Date) => {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d;
-};
+  const getWeekRange = (offset: number) => {
+    const perthToday = getPerthToday();
 
-const getWeekRange = (offset: number) => {
-  const today = getPerthToday();
+    if (isYouth) {
+      const fridayPerth = new Date(perthToday);
+      const day = fridayPerth.getDay();
+      let diff = 5 - day;
+      if (day === 6) diff = 6;
 
-  if (isYouth) {
-    const friday = new Date(today);
-    const day = friday.getDay();
-    let diff = 5 - day;
-    if (day === 6) diff = 6;
+      fridayPerth.setDate(fridayPerth.getDate() + diff - offset * 7);
 
-    friday.setDate(friday.getDate() + diff - offset * 7);
+      const weekEndPerth = endOfDay(fridayPerth);
+      const weekStartPerth = new Date(fridayPerth);
+      weekStartPerth.setDate(fridayPerth.getDate() - 6);
+      weekStartPerth.setHours(0, 0, 0, 0);
 
-    const weekEnd = endOfDay(friday);
-    const weekStart = new Date(friday);
-    weekStart.setDate(friday.getDate() - 6);
-    weekStart.setHours(0, 0, 0, 0);
+      return {
+        weekStart: fromZonedTime(weekStartPerth, PERTH_TZ),
+        weekEnd: fromZonedTime(weekEndPerth, PERTH_TZ),
+        labelDate: fromZonedTime(fridayPerth, PERTH_TZ),
+      };
+    }
 
-    return { weekStart, weekEnd, labelDate: friday };
-  }
+    const sundayPerth = new Date(perthToday);
+    const day = sundayPerth.getDay();
+    let diff = (7 - day) % 7;
+    if (day === 0) diff = 0;
 
-  const sunday = new Date(today);
-  const day = sunday.getDay();
-  let diff = (7 - day) % 7;
-  if (day === 0) diff = 0;
+    sundayPerth.setDate(sundayPerth.getDate() + diff - offset * 7);
 
-  sunday.setDate(sunday.getDate() + diff - offset * 7);
+    const weekEndPerth = endOfDay(sundayPerth);
+    const weekStartPerth = new Date(sundayPerth);
+    weekStartPerth.setDate(sundayPerth.getDate() - 6);
+    weekStartPerth.setHours(0, 0, 0, 0);
 
-  const weekEnd = endOfDay(sunday);
-  const weekStart = new Date(sunday);
-  weekStart.setDate(sunday.getDate() - 6);
-  weekStart.setHours(0, 0, 0, 0);
-
-  return { weekStart, weekEnd, labelDate: sunday };
-};
+    return {
+      weekStart: fromZonedTime(weekStartPerth, PERTH_TZ),
+      weekEnd: fromZonedTime(weekEndPerth, PERTH_TZ),
+      labelDate: fromZonedTime(sundayPerth, PERTH_TZ),
+    };
+  };
 
   const getWeekLabel = (offset: number) => {
     const { labelDate, weekStart, weekEnd } = getWeekRange(offset);
@@ -285,7 +285,8 @@ const getWeekRange = (offset: number) => {
     const term = searchTerm.toLowerCase().trim();
 
     return ministryYouths.filter((youth) => {
-      const fullName = `${youth.firstName ?? ""} ${youth.lastName ?? ""}`.toLowerCase();
+      const fullName =
+        `${youth.firstName ?? ""} ${youth.lastName ?? ""}`.toLowerCase();
       const cell = youth.cell ?? "";
 
       if (!allowedCells.includes(cell)) return false;
@@ -313,12 +314,13 @@ const getWeekRange = (offset: number) => {
           })
           .filter(Boolean) as WeeklyRecord[]
       )
-      .filter(({ signInDate }) => signInDate >= weekStart && signInDate <= weekEnd)
+      .filter(
+        ({ signInDate }) => signInDate >= weekStart && signInDate <= weekEnd
+      )
       .sort((a, b) => b.signInDate.getTime() - a.signInDate.getTime());
   }, [filteredYouths, weekStart, weekEnd]);
 
   const totalAttendance = weeklyRecords.length;
-
   const chartLabels = selectedCells;
 
   const chartValues = useMemo(() => {
@@ -377,7 +379,9 @@ const getWeekRange = (offset: number) => {
       },
       title: {
         display: true,
-        text: `${isYouth ? "Youth" : "Sunday School"} Attendance by Cell - ${serviceDateTitle}`,
+        text: `${
+          isYouth ? "Youth" : "Sunday School"
+        } Attendance by Cell - ${serviceDateTitle}`,
         color: "#e5e7eb",
       },
     },
@@ -414,7 +418,9 @@ const getWeekRange = (offset: number) => {
     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
       <div className="w-full max-w-6xl mx-auto px-4">
         <h3 className="text-2xl font-semibold mb-2 text-center">
-          {isYouth ? "Youth Check-In Statistics" : "Sunday School Check-In Statistics"}
+          {isYouth
+            ? "Youth Check-In Statistics"
+            : "Sunday School Check-In Statistics"}
         </h3>
 
         <p className="text-center text-gray-400 mb-6">
@@ -443,16 +449,16 @@ const getWeekRange = (offset: number) => {
             className="text-white"
           >
             {weekOptions.map((week) => (
-              <SelectItem key={String(week.value)}>
-                {week.label}
-              </SelectItem>
+              <SelectItem key={String(week.value)}>{week.label}</SelectItem>
             ))}
           </Select>
         </div>
 
         <div className="flex justify-between items-center mb-6 max-w-4xl mx-auto gap-3">
           <Button
-            onPress={() => setWeekOffset((prev) => Math.min(prev + 1, maxWeekOffset))}
+            onPress={() =>
+              setWeekOffset((prev) => Math.min(prev + 1, maxWeekOffset))
+            }
             className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
             isDisabled={weekOffset >= maxWeekOffset}
           >
@@ -460,7 +466,9 @@ const getWeekRange = (offset: number) => {
           </Button>
 
           <div className="text-center text-gray-300 font-medium">
-            {weekOffset === 0 ? "Current Week" : `${weekOffset} week${weekOffset > 1 ? "s" : ""} ago`}
+            {weekOffset === 0
+              ? "Current Week"
+              : `${weekOffset} week${weekOffset > 1 ? "s" : ""} ago`}
           </div>
 
           <Button
@@ -476,7 +484,9 @@ const getWeekRange = (offset: number) => {
           <CardBody>
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">Total Attendance</div>
-              <div className="text-3xl font-bold text-white">{totalAttendance}</div>
+              <div className="text-3xl font-bold text-white">
+                {totalAttendance}
+              </div>
             </div>
           </CardBody>
         </Card>
@@ -553,7 +563,11 @@ const getWeekRange = (offset: number) => {
                     </TableCell>
                     <TableCell>{youth.cell || "Unassigned"}</TableCell>
                     <TableCell>{formatDateTime(record.signInTime)}</TableCell>
-                    <TableCell>{record.signOutTime ? formatDateTime(record.signOutTime) : "—"}</TableCell>
+                    <TableCell>
+                      {record.signOutTime
+                        ? formatDateTime(record.signOutTime)
+                        : "—"}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
@@ -570,7 +584,8 @@ const getWeekRange = (offset: number) => {
 
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-gray-400">
-            {weeklyRecords.length} record{weeklyRecords.length !== 1 ? "s" : ""}
+            {weeklyRecords.length} record
+            {weeklyRecords.length !== 1 ? "s" : ""}
           </div>
 
           <div className="flex justify-center gap-4">
