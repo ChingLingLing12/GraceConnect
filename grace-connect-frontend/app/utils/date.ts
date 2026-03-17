@@ -1,10 +1,10 @@
-// utils/date.ts
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import { formatInTimeZone } from "date-fns-tz";
 
-export const PERTH_TZ = "Australia/Perth";
+export const PERTH_TZ = "+08:00";
 
 export const formatPerthDateTime = (value?: string | Date | null) => {
   if (!value) return "—";
+
   const d = new Date(value);
   if (isNaN(d.getTime())) return "—";
 
@@ -20,26 +20,21 @@ export const formatPerthDate = (
   const d = new Date(value);
   if (isNaN(d.getTime())) return "—";
 
-  return new Intl.DateTimeFormat("en-AU", {
-    timeZone: PERTH_TZ,
-    ...options,
-  }).format(d);
+  if (options) {
+    return new Intl.DateTimeFormat("en-AU", {
+      timeZone: "Etc/GMT-8",
+      ...options,
+    }).format(d);
+  }
+
+  return formatInTimeZone(d, PERTH_TZ, "dd/MM/yyyy");
 };
 
-export const formatPerthShortDate = (value?: string | Date | null) => {
+export const formatPerthTime = (value?: string | Date | null) => {
   if (!value) return "—";
+
   const d = new Date(value);
   if (isNaN(d.getTime())) return "—";
 
-  return formatInTimeZone(d, PERTH_TZ, "d MMM");
+  return formatInTimeZone(d, PERTH_TZ, "hh:mm:ss a");
 };
-
-export const formatPerthWeekLabel = (value?: string | Date | null) => {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return "—";
-
-  return formatInTimeZone(d, PERTH_TZ, "EEE d MMM yyyy");
-};
-
-export const getPerthNow = () => toZonedTime(new Date(), PERTH_TZ);

@@ -17,9 +17,10 @@ import {
   Select,
   SelectItem,
 } from "@heroui/react";
-import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { apiFetch } from "../context/api";
 import { formatPerthDate, formatPerthDateTime } from "../utils/date";
+import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
+
 
 type Props = {
   ministry: "youth" | "sundayschool" | null;
@@ -108,7 +109,7 @@ export default function Statistics({ ministry }: Props) {
   };
 
   const getPerthToday = () => {
-    const perthNow = toZonedTime(new Date(), PERTH_TZ);
+    const perthNow = toZonedTime(new Date(), "+08:00");
     perthNow.setHours(0, 0, 0, 0);
     return perthNow;
   };
@@ -164,22 +165,9 @@ export default function Statistics({ ministry }: Props) {
   const getWeekLabel = (offset: number) => {
     const { labelDate, weekStart, weekEnd } = getWeekRange(offset);
 
-    const label = formatPerthDate(labelDate, {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-
-    const rangeStart = formatPerthDate(weekStart, {
-      day: "numeric",
-      month: "short",
-    });
-
-    const rangeEnd = formatPerthDate(weekEnd, {
-      day: "numeric",
-      month: "short",
-    });
+    const label = formatInTimeZone(labelDate, "+08:00", "EEE d MMM yyyy");
+    const rangeStart = formatInTimeZone(weekStart, "+08:00", "d MMM");
+    const rangeEnd = formatInTimeZone(weekEnd, "+08:00", "d MMM");
 
     return `${label} (${rangeStart} - ${rangeEnd})`;
   };
@@ -362,12 +350,9 @@ export default function Statistics({ ministry }: Props) {
     ],
   };
 
-  const serviceDateTitle = formatPerthDate(labelDate, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const serviceDateTitle = labelDate
+  ? formatInTimeZone(labelDate, "+08:00", "EEEE, d MMMM yyyy")
+  : "—";
 
   const barOptions = {
     responsive: true,
