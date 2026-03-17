@@ -54,20 +54,23 @@ export default function Dashboard({ ministry }: Props) {
   };
 
   const fetchHouseholds = async () => {
-  if (!ministry) {
-    setHouseholds([]);
-    return;
-  }
+    if (!ministry) {
+      setHouseholds([]);
+      return;
+    }
 
-  try {
-    const data = await apiFetch(`${HOUSEHOLD_URL}?ministry=${ministry}`);
-
-    setHouseholds(Array.isArray(data) ? data : data.households || []);
-  } catch (error) {
-    console.error("Error fetching households:", error);
-    setHouseholds([]);
-  }
-};
+    try {
+      const data = await apiFetch(`${HOUSEHOLD_URL}?ministry=${ministry}`);
+      setHouseholds(
+        Array.isArray(data)
+          ? data
+          : data.households || data.houseHolds || []
+      );
+    } catch (error) {
+      console.error("Error fetching households:", error);
+      setHouseholds([]);
+    }
+  };
 
   const createYouth = async (youth: Omit<Youth, "_id">) => {
     const data = await apiFetch(YOUTH_URL, {
@@ -111,7 +114,7 @@ export default function Dashboard({ ministry }: Props) {
       await fetchYouths();
     } catch (error) {
       console.error("Error signing in:", error);
-      alert("Failed to sign in");
+      alert(error instanceof Error ? error.message : "Failed to sign in");
     }
   };
 
@@ -210,52 +213,46 @@ export default function Dashboard({ ministry }: Props) {
 
   useEffect(() => {
     if (!ministry) return;
-
     fetchYouths();
     fetchHouseholds();
   }, [ministry]);
 
   const filteredYouths = youths.filter((y) => {
-    const matchesSearch = `${y.firstName} ${y.lastName}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+  const matchesSearch = `${y.firstName} ${y.lastName}`
+    .toLowerCase()
+    .includes(searchTerm.toLowerCase());
 
-    const matchesFilter =
-      filterMode === "default"
-        ? true
-        : filterMode === "signedIn"
-        ? y.signedIn
-        : !y.signedIn;
+  const matchesFilter =
+    filterMode === "default"
+      ? true
+      : filterMode === "signedIn"
+      ? !y.signedIn
+      : y.signedIn;
 
-    return matchesSearch && matchesFilter && y.ministry === ministry;
-  });
+  return matchesSearch && matchesFilter && y.ministry === ministry;
+});
 
-  const groupedByCell = Array.from(new Set(filteredYouths.map((y) => y.cell))).map(
-    (cellName) => ({
-      cell: cellName,
-      youths: filteredYouths.filter((y) => y.cell === cellName),
-    })
-  );
-
-  const groupedByHouseHold = households
-  .filter((h) => !h.ministry || h.ministry === ministry)
-  .map((h) => ({
-    houseHold: h,
-    youths: filteredYouths.filter((y) =>
-      h.children?.some((c) => c._id === y._id)
-    ),
+  const groupedByCell = Array.from(
+    new Set(filteredYouths.map((y) => y.cell))
+  ).map((cellName) => ({
+    cell: cellName,
+    youths: filteredYouths.filter((y) => y.cell === cellName),
   }));
 
-  console.log("households:", households);
-console.log("youths:", youths);
-console.log("groupedByHouseHold:", groupedByHouseHold);
+  const groupedByHouseHold = households
+    .filter((h) => !h.ministry || h.ministry === ministry)
+    .map((h) => ({
+      houseHold: h,
+      youths: filteredYouths.filter((y) =>
+        h.children?.some((c) => c._id === y._id)
+      ),
+    }));
 
   if (!ministry) return null;
 
   return (
     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
       <div className="w-full max-w-6xl mx-auto px-4">
-
         <h3 className="text-2xl font-semibold mb-6 text-center">
           Grace Connect {ministry === "youth" ? "Youth" : "Sunday School"} Dashboard
         </h3>
@@ -270,9 +267,45 @@ console.log("groupedByHouseHold:", groupedByHouseHold);
         />
 
         <div className="flex justify-center gap-2 mb-4">
-          <Button variant={viewMode === "default" ? "solid" : "flat"} onPress={() => setViewMode("default")}>Default</Button>
-          <Button variant={viewMode === "cell" ? "solid" : "flat"} onPress={() => setViewMode("cell")}>Cell</Button>
-          <Button variant={viewMode === "houseHold" ? "solid" : "flat"} onPress={() => setViewMode("houseHold")}>Household</Button>
+          <Button
+            variant={viewMode === "default" ? "solid" : "flat"}
+            onPress={() => setViewMode("default")}
+          >
+            Default
+          </Button>
+          <Button
+            variant={viewMode === "cell" ? "solid" : "flat"}
+            onPress={() => setViewMode("cell")}
+          >
+            Cell
+          </Button>
+          <Button
+            variant={viewMode === "houseHold" ? "solid" : "flat"}
+            onPress={() => setViewMode("houseHold")}
+          >
+            Household
+          </Button>
+        </div>
+
+        <div className="flex justify-center gap-2 mb-4">
+          <Button
+            variant={filterMode === "default" ? "solid" : "flat"}
+            onPress={() => setFilterMode("default")}
+          >
+            Default
+          </Button>
+          <Button
+            variant={filterMode === "signedIn" ? "solid" : "flat"}
+            onPress={() => setFilterMode("signedIn")}
+          >
+            Sign In
+          </Button>
+          <Button
+            variant={filterMode === "signedOut" ? "solid" : "flat"}
+            onPress={() => setFilterMode("signedOut")}
+          >
+            Sign Out
+          </Button>
         </div>
 
         {viewMode === "default" && (
@@ -309,12 +342,11 @@ console.log("groupedByHouseHold:", groupedByHouseHold);
             removeYouth={removeYouth}
             removeHouseHold={async (id: string) => {
               await apiFetch(`${HOUSEHOLD_URL}/${id}`, { method: "DELETE" });
-              fetchHouseholds();
+              await fetchHouseholds();
             }}
             editMode={editMode}
           />
         )}
-
       </div>
     </main>
   );
