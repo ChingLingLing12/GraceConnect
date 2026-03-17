@@ -54,19 +54,20 @@ export default function Dashboard({ ministry }: Props) {
   };
 
   const fetchHouseholds = async () => {
-    if (!ministry) {
-      setHouseholds([]);
-      return;
-    }
+  if (!ministry) {
+    setHouseholds([]);
+    return;
+  }
 
-    try {
-      const data = await apiFetch(`${HOUSEHOLD_URL}?ministry=${ministry}`);
-      setHouseholds(Array.isArray(data) ? data : data.households || []);
-    } catch (error) {
-      console.error("Error fetching households:", error);
-      setHouseholds([]);
-    }
-  };
+  try {
+    const data = await apiFetch(`${HOUSEHOLD_URL}?ministry=${ministry}`);
+
+    setHouseholds(Array.isArray(data) ? data : data.households || []);
+  } catch (error) {
+    console.error("Error fetching households:", error);
+    setHouseholds([]);
+  }
+};
 
   const createYouth = async (youth: Omit<Youth, "_id">) => {
     const data = await apiFetch(YOUTH_URL, {
@@ -237,16 +238,17 @@ export default function Dashboard({ ministry }: Props) {
   );
 
   const groupedByHouseHold = households
-    .filter((h) => h.ministry === ministry)
-    .map((h) => ({
-      houseHold: h,
-      youths: filteredYouths.filter(
-        (y) =>
-          y.ministry === ministry &&
-          h.children?.some((c) => c._id === y._id)
-      ),
-    }))
-    .filter((group) => group.youths.length > 0);
+  .filter((h) => !h.ministry || h.ministry === ministry)
+  .map((h) => ({
+    houseHold: h,
+    youths: filteredYouths.filter((y) =>
+      h.children?.some((c) => c._id === y._id)
+    ),
+  }));
+
+  console.log("households:", households);
+console.log("youths:", youths);
+console.log("groupedByHouseHold:", groupedByHouseHold);
 
   if (!ministry) return null;
 
