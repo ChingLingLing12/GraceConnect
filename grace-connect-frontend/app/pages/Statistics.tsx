@@ -18,7 +18,7 @@ import {
   SelectItem,
 } from "@heroui/react";
 import { apiFetch } from "../context/api";
-import { formatPerthTime, formatPerthDate } from "../utils/date";
+import { formatPerthTime, formatPerthDate, formatPerthDateTime } from "../utils/date";
 
 type Props = {
   ministry: "youth" | "sundayschool" | null;
@@ -97,10 +97,7 @@ export default function Statistics({ ministry }: Props) {
   }, [allowedCells, ministry]);
 
   const formatDateTime = (value?: string | null) => {
-    if (!value) return "—";
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return "—";
-    return formatPerthTime(value);
+    return formatPerthDateTime(value);
   };
 
   const parseDate = (value?: string | null) => {
@@ -110,46 +107,59 @@ export default function Statistics({ ministry }: Props) {
     return d;
   };
 
-  const endOfDay = (date: Date) => {
-    const d = new Date(date);
-    d.setHours(23, 59, 59, 999);
-    return d;
-  };
+  const getPerthToday = () => {
+  const perthNow = new Date(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Australia/Perth",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date())
+  );
 
-  const getWeekRange = (offset: number) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  perthNow.setHours(0, 0, 0, 0);
+  return perthNow;
+};
 
-    if (isYouth) {
-      const friday = new Date(today);
-      const day = friday.getDay();
-      let diff = 5 - day;
-      if (day === 6) diff = 6;
+const endOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
 
-      friday.setDate(friday.getDate() + diff - offset * 7);
+const getWeekRange = (offset: number) => {
+  const today = getPerthToday();
 
-      const weekEnd = endOfDay(friday);
-      const weekStart = new Date(friday);
-      weekStart.setDate(friday.getDate() - 6);
-      weekStart.setHours(0, 0, 0, 0);
+  if (isYouth) {
+    const friday = new Date(today);
+    const day = friday.getDay();
+    let diff = 5 - day;
+    if (day === 6) diff = 6;
 
-      return { weekStart, weekEnd, labelDate: friday };
-    }
+    friday.setDate(friday.getDate() + diff - offset * 7);
 
-    const sunday = new Date(today);
-    const day = sunday.getDay();
-    let diff = (7 - day) % 7;
-    if (day === 0) diff = 0;
-
-    sunday.setDate(sunday.getDate() + diff - offset * 7);
-
-    const weekEnd = endOfDay(sunday);
-    const weekStart = new Date(sunday);
-    weekStart.setDate(sunday.getDate() - 6);
+    const weekEnd = endOfDay(friday);
+    const weekStart = new Date(friday);
+    weekStart.setDate(friday.getDate() - 6);
     weekStart.setHours(0, 0, 0, 0);
 
-    return { weekStart, weekEnd, labelDate: sunday };
-  };
+    return { weekStart, weekEnd, labelDate: friday };
+  }
+
+  const sunday = new Date(today);
+  const day = sunday.getDay();
+  let diff = (7 - day) % 7;
+  if (day === 0) diff = 0;
+
+  sunday.setDate(sunday.getDate() + diff - offset * 7);
+
+  const weekEnd = endOfDay(sunday);
+  const weekStart = new Date(sunday);
+  weekStart.setDate(sunday.getDate() - 6);
+  weekStart.setHours(0, 0, 0, 0);
+
+  return { weekStart, weekEnd, labelDate: sunday };
+};
 
   const getWeekLabel = (offset: number) => {
     const { labelDate, weekStart, weekEnd } = getWeekRange(offset);
@@ -350,7 +360,7 @@ export default function Statistics({ ministry }: Props) {
     ],
   };
 
-  const serviceDateTitle = labelDate.toLocaleDateString(undefined, {
+  const serviceDateTitle = formatPerthDate(labelDate, {
     weekday: "long",
     day: "numeric",
     month: "long",

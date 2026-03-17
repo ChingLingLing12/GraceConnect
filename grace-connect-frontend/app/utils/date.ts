@@ -1,22 +1,47 @@
-export const formatPerthTime = (date: string | Date) => {
-  return new Date(date).toLocaleString("en-AU", {
-    timeZone: "Australia/Perth",
-  });
-};
+export const PERTH_TIMEZONE = "Australia/Perth";
 
-export const formatPerthTimeShort = (date: string | Date) => {
-  return new Date(date).toLocaleString("en-AU", {
-    timeZone: "Australia/Perth",
+export const formatPerthDateTime = (value?: string | Date | null) => {
+  if (!value) return "—";
+
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "—";
+
+  return new Intl.DateTimeFormat("en-AU", {
+    timeZone: PERTH_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
     day: "2-digit",
-    month: "short",
     hour: "2-digit",
     minute: "2-digit",
-  });
+    second: "2-digit",
+  }).format(d);
 };
 
-export const formatPerthDate = (date: string | Date, options?: Intl.DateTimeFormatOptions) => {
-  return new Date(date).toLocaleDateString("en-AU", {
-    timeZone: "Australia/Perth",
+export const formatPerthDate = (
+  value?: string | Date | null,
+  options?: Intl.DateTimeFormatOptions
+) => {
+  if (!value) return "—";
+
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "—";
+
+  return new Intl.DateTimeFormat("en-AU", {
+    timeZone: PERTH_TIMEZONE,
     ...options,
-  });
+  }).format(d);
+};
+
+export const formatPerthTime = (value?: string | Date | null) => {
+  if (!value) return "—";
+
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "—";
+
+  return new Intl.DateTimeFormat("en-AU", {
+    timeZone: PERTH_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(d);
 };
