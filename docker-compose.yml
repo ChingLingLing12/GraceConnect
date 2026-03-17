@@ -1,6 +1,8 @@
 services:
   frontend:
     build: ./grace-connect-frontend
+    environment:
+      - TZ=Australia/Perth
     container_name: frontend
     restart: always
     env_file:
