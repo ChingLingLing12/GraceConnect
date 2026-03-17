@@ -1,7 +1,7 @@
 import { Card, CardBody, Button } from "@heroui/react";
 import React from "react";
 import { YouthCardProps } from "../models";
-import { formatPerthDateTime, formatPerthTime } from "../utils/date";
+import { formatPerthDateTime } from "../utils/date";
 
 const YouthCard: React.FC<YouthCardProps> = ({
   youth,
