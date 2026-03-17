@@ -2,6 +2,7 @@ import { Card, CardBody, Button } from "@heroui/react";
 import React from "react";
 import { format } from "date-fns";
 import { YouthCardProps } from "../models";
+import { formatPerthTime } from "../utils/date";
 
 const YouthCard: React.FC<YouthCardProps> = ({
   youth,
@@ -38,7 +39,7 @@ const YouthCard: React.FC<YouthCardProps> = ({
                 }`}
               >
                 {youth.signedIn ? "Last Signed In:" : "Last Signed Out:"}{" "}
-                {format(new Date(latestTime), "EEE dd/MM HH:mm")}
+                {formatPerthTime(latestTime)}
               </p>
             ) : (
               <p className="text-gray-400 text-sm">Never</p>

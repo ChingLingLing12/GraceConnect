@@ -18,6 +18,7 @@ import {
   SelectItem,
 } from "@heroui/react";
 import { apiFetch } from "../context/api";
+import { formatPerthTime, formatPerthDate } from "../utils/date";
 
 type Props = {
   ministry: "youth" | "sundayschool" | null;
@@ -99,7 +100,7 @@ export default function Statistics({ ministry }: Props) {
     if (!value) return "—";
     const d = new Date(value);
     if (isNaN(d.getTime())) return "—";
-    return d.toLocaleString();
+    return formatPerthTime(value);
   };
 
   const parseDate = (value?: string | null) => {
@@ -153,19 +154,19 @@ export default function Statistics({ ministry }: Props) {
   const getWeekLabel = (offset: number) => {
     const { labelDate, weekStart, weekEnd } = getWeekRange(offset);
 
-    const label = labelDate.toLocaleDateString(undefined, {
+    const label = formatPerthDate(labelDate, {
       weekday: "short",
       day: "numeric",
       month: "short",
       year: "numeric",
     });
 
-    const rangeStart = weekStart.toLocaleDateString(undefined, {
+    const rangeStart = formatPerthDate(weekStart, {
       day: "numeric",
       month: "short",
     });
 
-    const rangeEnd = weekEnd.toLocaleDateString(undefined, {
+    const rangeEnd = formatPerthDate(weekEnd, {
       day: "numeric",
       month: "short",
     });
