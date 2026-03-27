@@ -16,6 +16,8 @@ services:
     restart: always
     env_file:
       - ./grace-connect-backend/.env.production
+    environment:
+    - TZ=Australia/Perth
     networks:
       - graceconnect-net
 
