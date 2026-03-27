@@ -12,15 +12,20 @@ export const YEAR_GROUPS_SUNDAY_SCHOOL = [
   "Flame [Y5]",
   "Torch Bearer [Y6 above]" ]
 
-export interface HouseHold {
-  _id: string; // MongoDB ID from backend
+export type HouseHold = {
+  _id: string;
   guardianFirstName: string;
   guardianLastName: string;
   email: string;
   phone: string;
-  children?: Youth[];
+
+  secondaryGuardianFirstName?: string;
+  secondaryGuardianLastName?: string;
+  secondaryGuardianPhone?: string;
+
+  children: string[] | Youth[];
   ministry?: "youth" | "sundayschool";
-}
+};
 
 export interface Youth {
   _id: string; // MongoDB ID from backend

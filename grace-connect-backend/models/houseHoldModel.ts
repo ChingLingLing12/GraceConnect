@@ -5,6 +5,10 @@ const houseHoldSchema = new mongoose.Schema({
     guardianLastName: String,
     email: String,
     phone: String,
+    secondaryGuardianFirstName: { type: String, default: "" },
+    secondaryGuardianLastName: { type: String, default: "" },
+    secondaryGuardianPhone: { type: String, default: "" },
+
     children: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Child' }],
     ministry: {
         type: String,

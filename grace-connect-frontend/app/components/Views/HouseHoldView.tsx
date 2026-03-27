@@ -86,16 +86,47 @@ export default function Householdview({
 
                 {/* DETAILS */}
                 {showDetails === houseHold._id && (
-                <div className="px-23 py-3 text-sm text-gray-200 border-b border-zinc-700 bg-zinc-800/40">
+                <div className="px-6 py-3 text-sm text-gray-200 border-b border-zinc-700 bg-zinc-800/40 space-y-2">
+
+                    {/* PRIMARY GUARDIAN */}
+                    <div>
+                    <p className="font-semibold text-white">Primary Guardian</p>
                     <p>
-                    <strong>Phone:</strong> {houseHold.phone}
+                        {houseHold.guardianFirstName} {houseHold.guardianLastName}
                     </p>
                     <p>
-                    <strong>Email:</strong> {houseHold.email}
+                        <strong>Phone:</strong> {houseHold.phone}
                     </p>
+                    <p>
+                        <strong>Email:</strong> {houseHold.email}
+                    </p>
+                    </div>
+
+                    {/* SECONDARY GUARDIAN (ONLY IF EXISTS) */}
+                    {(houseHold.secondaryGuardianFirstName ||
+                    houseHold.secondaryGuardianLastName ||
+                    houseHold.secondaryGuardianPhone) && (
+                    <div className="pt-2 border-t border-zinc-700">
+                        <p className="font-semibold text-white">Secondary Guardian</p>
+
+                        <p>
+                        {[
+                            houseHold.secondaryGuardianFirstName,
+                            houseHold.secondaryGuardianLastName,
+                        ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        </p>
+
+                        {houseHold.secondaryGuardianPhone && (
+                        <p>
+                            <strong>Phone:</strong> {houseHold.secondaryGuardianPhone}
+                        </p>
+                        )}
+                    </div>
+                    )}
                 </div>
                 )}
-
                 {/* BODY */}
                 <CardBody className="px-4 py-4 overflow-y-auto flex-1 space-y-4">
                 {filteredYouths.length > 0 ? (

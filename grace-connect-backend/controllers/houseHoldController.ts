@@ -6,14 +6,30 @@ const HouseHold =
   mongoose.model("HouseHold", houseHoldSchema);
 
 export const houseHoldController = {
-
   // ✅ CREATE
   createHouseHold: async (req: any, res: any) => {
     try {
-      const { guardianFirstName, guardianLastName, email, phone, children, ministry } = req.body;
+      const {
+        guardianFirstName,
+        guardianLastName,
+        email,
+        phone,
+        children = [],
+        ministry,
+        secondaryGuardianFirstName,
+        secondaryGuardianLastName,
+        secondaryGuardianPhone,
+      } = req.body;
 
       if (!ministry) {
-        return res.status(400).json({ error: "Ministry is required" });
+        return res.status(400).json({ success: false, error: "Ministry is required" });
+      }
+
+      if (!guardianFirstName || !guardianLastName || !email || !phone) {
+        return res.status(400).json({
+          success: false,
+          error: "Primary guardian first name, last name, email, and phone are required",
+        });
       }
 
       // Find existing household WITH SAME MINISTRY
@@ -22,89 +38,148 @@ export const houseHoldController = {
         guardianLastName,
         email,
         phone,
-        ministry
+        ministry,
       });
 
       if (existing) {
-        // Add new children safely without duplicates
-        await HouseHold.findByIdAndUpdate(
+        const updatedExisting = await HouseHold.findByIdAndUpdate(
           existing._id,
-          { $addToSet: { children: { $each: children } } },
+          {
+            $addToSet: { children: { $each: children } },
+            $set: {
+              secondaryGuardianFirstName: secondaryGuardianFirstName || "",
+              secondaryGuardianLastName: secondaryGuardianLastName || "",
+              secondaryGuardianPhone: secondaryGuardianPhone || "",
+            },
+          },
           { new: true }
         );
 
         return res.status(200).json({
+          success: true,
           message: "Household already exists, children updated",
-          _id: existing._id
+          household: updatedExisting,
+          _id: existing._id,
         });
       }
 
-      const newHouseHold = new HouseHold(req.body);
+      const newHouseHold = new HouseHold({
+        guardianFirstName,
+        guardianLastName,
+        email,
+        phone,
+        ministry,
+        children,
+        secondaryGuardianFirstName: secondaryGuardianFirstName || "",
+        secondaryGuardianLastName: secondaryGuardianLastName || "",
+        secondaryGuardianPhone: secondaryGuardianPhone || "",
+      });
+
       await newHouseHold.save();
 
-      res.status(201).json(newHouseHold);
-
+      return res.status(201).json({
+        success: true,
+        message: "Household created successfully",
+        household: newHouseHold,
+        _id: newHouseHold._id,
+      });
     } catch (error) {
       console.error("Error creating household:", error);
-      res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({
+        success: false,
+        error: "Internal server error",
+      });
     }
   },
 
-
   // ✅ GET (FILTER BY MINISTRY)
   getHouseHolds: async (req: any, res: any) => {
-  try {
-    const ministry = req.query.ministry;
+    try {
+      const ministry = req.query.ministry;
 
-    if (!ministry || !["youth", "sundayschool"].includes(ministry)) {
-      return res.status(400).json({ error: "Valid ministry is required" });
+      if (!ministry || !["youth", "sundayschool"].includes(ministry)) {
+        return res.status(400).json({
+          success: false,
+          error: "Valid ministry is required",
+        });
+      }
+
+      const houseHolds = await HouseHold.find({ ministry }).populate(
+        "children",
+        "firstName lastName age cell signedIn ministry"
+      );
+
+      return res.status(200).json({
+        success: true,
+        households: houseHolds,
+      });
+    } catch (error) {
+      console.error("Error fetching households:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Internal server error",
+      });
     }
-
-    const houseHolds = await HouseHold.find({ ministry })
-      .populate("children", "firstName lastName age cell signedIn ministry");
-
-    res.status(200).json({ success: true, households: houseHolds });
-  } catch (error) {
-    console.error("Error fetching households:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-},
-
+  },
 
   // ✅ EDIT
   editHouseHold: async (req: any, res: any) => {
     try {
       const { _id } = req.params;
-      const updates = req.body;
+      const {
+        children,
+        secondaryGuardianFirstName,
+        secondaryGuardianLastName,
+        secondaryGuardianPhone,
+        ...otherUpdates
+      } = req.body;
 
-      // Safely add children without duplicates
-      if (updates.children) {
-        const updatedHouseHold = await HouseHold.findByIdAndUpdate(
-          _id,
-          { $addToSet: { children: { $each: updates.children } } },
-          { new: true }
-        );
+      const updateQuery: any = {
+        $set: {
+          ...otherUpdates,
+        },
+      };
 
-        return res.status(200).json(updatedHouseHold);
+      if (secondaryGuardianFirstName !== undefined) {
+        updateQuery.$set.secondaryGuardianFirstName = secondaryGuardianFirstName || "";
       }
 
-      const updatedHouseHold = await HouseHold.findByIdAndUpdate(
-        _id,
-        updates,
-        { new: true }
-      );
+      if (secondaryGuardianLastName !== undefined) {
+        updateQuery.$set.secondaryGuardianLastName = secondaryGuardianLastName || "";
+      }
 
-      if (!updatedHouseHold)
-        return res.status(404).json({ error: "Household not found" });
+      if (secondaryGuardianPhone !== undefined) {
+        updateQuery.$set.secondaryGuardianPhone = secondaryGuardianPhone || "";
+      }
 
-      res.status(200).json(updatedHouseHold);
+      if (children && Array.isArray(children) && children.length > 0) {
+        updateQuery.$addToSet = { children: { $each: children } };
+      }
 
+      const updatedHouseHold = await HouseHold.findByIdAndUpdate(_id, updateQuery, {
+        new: true,
+      });
+
+      if (!updatedHouseHold) {
+        return res.status(404).json({
+          success: false,
+          error: "Household not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Household updated successfully",
+        household: updatedHouseHold,
+      });
     } catch (error) {
       console.error("Error updating household:", error);
-      res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({
+        success: false,
+        error: "Internal server error",
+      });
     }
   },
-
 
   // ✅ DELETE
   deleteHouseHold: async (req: any, res: any) => {
@@ -116,24 +191,23 @@ export const houseHoldController = {
       if (!deleted) {
         return res.status(404).json({
           success: false,
-          error: "Household not found"
+          error: "Household not found",
         });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Household deleted",
-        _id
+        _id,
       });
-
     } catch (error) {
       console.error("Error deleting household:", error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
-        error: "Failed to delete household"
+        error: "Failed to delete household",
       });
     }
-  }
+  },
 };
 
 export default houseHoldController;

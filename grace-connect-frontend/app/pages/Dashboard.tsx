@@ -200,16 +200,16 @@ export default function Dashboard({ ministry }: Props) {
     );
   };
 
-  const openEditHousehold = (houseHold: HouseHold) => {
-    setSelectedHousehold(houseHold._id || null);
-    setEditMode(true);
-    setNewYouths(
-      houseHold.children?.map((c) => ({
-        ...c,
-        signedIn: c.signedIn || false,
-      })) || []
-    );
-  };
+  // const openEditHousehold = (houseHold: HouseHold) => {
+  //   setSelectedHousehold(houseHold._id || null);
+  //   setEditMode(true);
+  //   setNewYouths(
+  //     houseHold.children?.map((c) => ({
+  //       ...c,
+  //       signedIn: c.signedIn || false,
+  //     })) || []
+  //   );
+  // };
 
   useEffect(() => {
     if (!ministry) return;
@@ -333,18 +333,19 @@ export default function Dashboard({ ministry }: Props) {
         {viewMode === "houseHold" && (
           <HouseHoldView
             groupedByHouseHold={groupedByHouseHold}
+            handleSignIn={handleSignIn}
+            handleSignOut={handleSignOut}
             selectedHousehold={selectedHousehold}
-            openHouseholdEditor={openEditHousehold}
-            handleSubmit={handleSubmit}
             newYouths={newYouths}
             updateYouth={updateYouth}
-            addYouth={addYouth}
+            handleSubmit={handleSubmit}
             removeYouth={removeYouth}
+            addYouth={addYouth}
+            editMode={editMode}
             removeHouseHold={async (id: string) => {
               await apiFetch(`${HOUSEHOLD_URL}/${id}`, { method: "DELETE" });
               await fetchHouseholds();
             }}
-            editMode={editMode}
           />
         )}
       </div>
