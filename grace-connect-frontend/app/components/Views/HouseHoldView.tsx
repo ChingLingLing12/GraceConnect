@@ -29,13 +29,14 @@ export default function Householdview({
             </p>
             </div>
         )}
-
-        {groupedByHouseHold.map(({ houseHold, youths }: any) => {
-            // FILTER: show permanent youths and temporary youths who are signed in
+    
+       {groupedByHouseHold.map(({ houseHold, youths }: any) => {
             const filteredYouths = youths.filter(
-            (y: any) => !y.oneTime || (y.oneTime && y.signedIn)
+                (y: any) => !y.oneTime || (y.oneTime && y.signedIn)
             );
 
+            // ✅ HIDE household if no visible youths
+            if (filteredYouths.length === 0) return null;
             return (
             <Card
                 key={houseHold._id}
