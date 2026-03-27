@@ -200,17 +200,6 @@ export default function Dashboard({ ministry }: Props) {
     );
   };
 
-  // const openEditHousehold = (houseHold: HouseHold) => {
-  //   setSelectedHousehold(houseHold._id || null);
-  //   setEditMode(true);
-  //   setNewYouths(
-  //     houseHold.children?.map((c) => ({
-  //       ...c,
-  //       signedIn: c.signedIn || false,
-  //     })) || []
-  //   );
-  // };
-
   useEffect(() => {
     if (!ministry) return;
     fetchYouths();
@@ -239,16 +228,21 @@ export default function Dashboard({ ministry }: Props) {
     youths: filteredYouths.filter((y) => y.cell === cellName),
   }));
 
+    const childMatchesYouth = (child: any, youthId?: string) => {
+    if (!child || !youthId) return false;
+    if (typeof child === "string") return child === youthId;
+    if (typeof child === "object" && child._id) return child._id === youthId;
+    return false;
+  };
+
   const groupedByHouseHold = households
     .filter((h) => !h.ministry || h.ministry === ministry)
     .map((h) => ({
       houseHold: h,
       youths: filteredYouths.filter((y) =>
-        h.children?.some((c) => c._id === y._id)
+        h.children?.some((c) => childMatchesYouth(c, y._id))
       ),
-    }));
-
-  if (!ministry) return null;
+  }));
 
   return (
     <main className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center p-12">
